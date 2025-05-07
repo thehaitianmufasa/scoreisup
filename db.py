@@ -1,7 +1,7 @@
-from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
 import streamlit as st
+from datetime import datetime
 
 def insert_dispute_submission(
     name, email, address, dob, ssn_last4,
@@ -9,14 +9,11 @@ def insert_dispute_submission(
 ):
     connection = None
     try:
-        # Ensure dates are not None
-        if not dob or not letter_date:
-            st.error("Date of Birth and Letter Date must be provided.")
-            return False
-
-        # Convert MM/DD/YYYY to YYYY-MM-DD
-        dob = datetime.strptime(dob, "%m/%d/%Y").strftime("%Y-%m-%d")
-        letter_date = datetime.strptime(letter_date, "%m/%d/%Y").strftime("%Y-%m-%d")
+        # Safely convert dates if needed
+        if isinstance(dob, str):
+            dob = datetime.strptime(dob, "%m/%d/%Y").strftime("%Y-%m-%d")
+        if isinstance(letter_date, str):
+            letter_date = datetime.strptime(letter_date, "%Y/%m/%d").strftime("%Y-%m-%d")
 
         connection = mysql.connector.connect(
             host=st.secrets["MYSQL_HOST"],
