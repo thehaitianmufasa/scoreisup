@@ -1,4 +1,4 @@
-
+from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
 import streamlit as st
@@ -9,6 +9,10 @@ def insert_dispute_submission(
 ):
     connection = None
     try:
+        # Convert dates from MM/DD/YYYY to YYYY-MM-DD
+        dob = datetime.strptime(dob, "%m/%d/%Y").strftime("%Y-%m-%d")
+        letter_date = datetime.strptime(letter_date, "%m/%d/%Y").strftime("%Y-%m-%d")
+
         connection = mysql.connector.connect(
             host=st.secrets["MYSQL_HOST"],
             port=int(st.secrets["MYSQL_PORT"]),
@@ -33,10 +37,12 @@ def insert_dispute_submission(
             connection.commit()
             return True
 
+    except ValueError as ve:
+        st.error(f"Date format error: {ve}")
+        return False
     except Error as e:
         st.error(f"MySQL Error: {e}")
         return False
-
     finally:
         if connection and connection.is_connected():
             cursor.close()
