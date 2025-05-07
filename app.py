@@ -7,6 +7,8 @@ from db import insert_dispute_submission
 
 st.title("📄 Credit Dispute Letter Generator")
 
+from db import create_dispute_table
+
 # --- Form ---
 with st.form("dispute_form"):
     client_name = st.text_input("Full Name")
@@ -17,6 +19,10 @@ with st.form("dispute_form"):
     letter_date = st.date_input("Select Letter Date", value=datetime.date.today())
     email = st.text_input("Email Address")
     ssn_last4 = st.text_input("Last 4 Digits of SSN")
+
+    # Temporary Admin Table Creator
+if st.button("Create Table (Admin Only)"):
+    create_dispute_table()
 
     bureau_options = {
         "Equifax": "Equifax Security & Fraud Prevention\nP.O. Box 105788\nAtlanta, GA 30348-5788",
