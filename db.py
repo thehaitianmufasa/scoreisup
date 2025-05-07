@@ -9,7 +9,12 @@ def insert_dispute_submission(
 ):
     connection = None
     try:
-        # Convert dates from MM/DD/YYYY to YYYY-MM-DD
+        # Ensure dates are not None
+        if not dob or not letter_date:
+            st.error("Date of Birth and Letter Date must be provided.")
+            return False
+
+        # Convert MM/DD/YYYY to YYYY-MM-DD
         dob = datetime.strptime(dob, "%m/%d/%Y").strftime("%Y-%m-%d")
         letter_date = datetime.strptime(letter_date, "%m/%d/%Y").strftime("%Y-%m-%d")
 
@@ -37,12 +42,10 @@ def insert_dispute_submission(
             connection.commit()
             return True
 
-    except ValueError as ve:
-        st.error(f"Date format error: {ve}")
-        return False
     except Error as e:
         st.error(f"MySQL Error: {e}")
         return False
+
     finally:
         if connection and connection.is_connected():
             cursor.close()
