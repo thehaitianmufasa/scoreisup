@@ -1,22 +1,20 @@
 
 import mysql.connector
 from mysql.connector import Error
-import os
-from dotenv import load_dotenv
-
-load_dotenv()  # load environment variables from a .env file
+import streamlit as st
 
 def insert_dispute_submission(
     name, email, address, dob, ssn_last4,
     bureau, dispute_reasons, letter_date
 ):
+    connection = None
     try:
         connection = mysql.connector.connect(
-            host=os.getenv("MYSQL_HOST"),
-            port=int(os.getenv("MYSQL_PORT", 3306)),
-            user=os.getenv("MYSQL_USER"),
-            password=os.getenv("MYSQL_PASSWORD"),
-            database=os.getenv("MYSQL_DATABASE")
+            host=st.secrets["MYSQL_HOST"],
+            port=int(st.secrets["MYSQL_PORT"]),
+            user=st.secrets["MYSQL_USER"],
+            password=st.secrets["MYSQL_PASSWORD"],
+            database=st.secrets["MYSQL_DATABASE"]
         )
 
         if connection.is_connected():
@@ -36,10 +34,10 @@ def insert_dispute_submission(
             return True
 
     except Error as e:
-        print(f"❌ MySQL Error: {e}")
+        st.error(f"MySQL Error: {e}")
         return False
 
     finally:
-        if connection.is_connected():
+        if connection and connection.is_connected():
             cursor.close()
             connection.close()
