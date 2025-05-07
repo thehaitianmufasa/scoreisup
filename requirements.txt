@@ -1,2 +1,5 @@
 streamlit
 fpdf
+mysql-connector-python
+streamlit
+python-dotenv
