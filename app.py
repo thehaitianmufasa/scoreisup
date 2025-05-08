@@ -1,177 +1,90 @@
 import streamlit as st
-from db import insert_user, get_user_by_email, insert_dispute_submission
+from datetime import datetime
 import bcrypt
-from fpdf import FPDF
-import tempfile
-import datetime
+from db import insert_dispute_submission, create_user, get_user_by_email
 
-# --- Session Defaults ---
-if "user" not in st.session_state:
-    st.session_state["user"] = None
-if "login_mode" not in st.session_state:
-    st.session_state["login_mode"] = "login"
+# Session State Initialization
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+if 'user_email' not in st.session_state:
+    st.session_state.user_email = ""
 
-st.title("🔐 Dispute Letter Portal")
+# ----------------- AUTHENTICATION -----------------
+def signup():
+    st.subheader("Create Account")
+    email = st.text_input("Email", key="signup_email")
+    password = st.text_input("Password", type="password", key="signup_password")
 
-# --- Logged In ---
-if st.session_state["user"]:
-    st.caption(f"Logged in as: {st.session_state['user']}")
-    if st.button("Logout"):
-        st.session_state["user"] = None
-        st.session_state["login_mode"] = "login"
-        st.experimental_rerun()
+    if st.button("Sign Up"):
+        if get_user_by_email(email):
+            st.warning("Email already exists.")
+        else:
+            hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+            create_user(email, hashed_pw)
+            st.success("Account created. Please log in.")
 
-# --- Not Logged In ---
-elif st.session_state["login_mode"] == "login":
-    st.subheader("Log In")
-    login_email = st.text_input("Email")
-    login_password = st.text_input("Password", type="password")
-    if st.button("Log In"):
-        user = get_user_by_email(login_email)
-        if user and bcrypt.checkpw(login_password.encode('utf-8'), user[2].encode('utf-8')):
-            st.session_state["user"] = user[1]
+def login():
+    st.subheader("Login")
+    email = st.text_input("Email", key="login_email")
+    password = st.text_input("Password", type="password", key="login_password")
+
+    if st.button("Login"):
+        user = get_user_by_email(email)
+        if user and bcrypt.checkpw(password.encode(), user['password'].encode()):
+            st.session_state.logged_in = True
+            st.session_state.user_email = email
             st.success("Login successful!")
             st.experimental_rerun()
         else:
-            st.error("Invalid email or password.")
-    if st.button("Go to Sign Up"):
-        st.session_state["login_mode"] = "signup"
+            st.error("Invalid credentials.")
 
-# --- Sign Up Flow ---
-elif st.session_state["login_mode"] == "signup":
-    st.subheader("Sign Up")
-    signup_email = st.text_input("Email", key="signup_email")
-    signup_password = st.text_input("Password", type="password", key="signup_password")
-    if st.button("Create Account"):
-    if get_user_by_email(signup_email):
-        st.error("Account already exists.")
-    else:
-        success = insert_user(signup_email, signup_password)
-        if success:
-            st.success("Account created! Please log in.")
-            st.session_state["login_mode"] = "login"
-            st.stop()  # Stop instead of rerunning
-        else:
-            st.error("Error creating account.")
-    if st.button("Go to Login"):
-        st.session_state["login_mode"] = "login"
+# ----------------- DISPUTE FORM -----------------
+def dispute_form():
+    st.subheader("Generate Dispute Letter")
 
-# --- Protected Area ---
-if st.session_state["user"]:
-    st.title("📄 Credit Dispute Letter Generator")
+    name = st.text_input("Full Name")
+    email = st.text_input("Email", value=st.session_state.user_email)
+    address = st.text_area("Mailing Address")
+    dob = st.text_input("Date of Birth (MM/DD/YYYY)")
+    ssn_last4 = st.text_input("Last 4 Digits of SSN")
+    bureau = st.selectbox("Select Bureau", ["Equifax", "Experian", "TransUnion"])
+    letter_date = st.date_input("Letter Date", datetime.today()).strftime("%m/%d/%Y")
 
-    if "num_accounts" not in st.session_state:
-        st.session_state.num_accounts = 1
+    st.markdown("You can dispute up to 5 accounts below:")
 
-    def add_account():
-        if st.session_state.num_accounts < 5:
-            st.session_state.num_accounts += 1
+    dispute_data = []
+    for i in range(5):
+        with st.expander(f"Account #{i+1}", expanded=(i==0)):
+            account_name = st.text_input(f"Account Name #{i+1}", key=f"acct_name_{i}")
+            account_number = st.text_input(f"Account Number #{i+1}", key=f"acct_num_{i}")
+            reason = st.text_area(f"Dispute Reason #{i+1}", key=f"reason_{i}")
+            if account_name and account_number and reason:
+                dispute_data.append((account_name, account_number, reason))
 
-    if st.session_state.num_accounts < 5:
-        if st.button("➕ Add Another Account"):
-            add_account()
+    if st.button("Generate & Submit"):
+        for account in dispute_data:
+            insert_dispute_submission(
+                name=name,
+                email=email,
+                address=address,
+                dob=dob,
+                ssn_last4=ssn_last4,
+                bureau=bureau,
+                dispute_reasons=f"{account[0]} - {account[1]}: {account[2]}",
+                letter_date=letter_date
+            )
+        st.success("Dispute letters submitted successfully!")
 
-    reason_texts = {
-        "Account not mine (identity theft)": ("Re: Fraudulent Account Dispute", "This is identity theft..."),
-        "Paid account still showing unpaid": ("Re: Paid but Marked Unpaid", "This was paid in full..."),
-        # ... [rest of your reasons]
-    }
+# ----------------- APP FLOW -----------------
+st.title("Credit Dispute Letter Generator")
 
-    with st.form("dispute_form"):
-        st.markdown("## 🔒 Your Information")
-        client_name = st.text_input("Full Name")
-        address = st.text_input("Mailing Address")
-        dob = st.text_input("Date of Birth (MM/DD/YYYY)")
-        letter_date = st.date_input("Letter Date", value=datetime.date.today())
-        email = st.text_input("Email Address")
-        ssn_last4 = st.text_input("Last 4 Digits of SSN")
+if not st.session_state.logged_in:
+    tab1, tab2 = st.tabs(["Login", "Sign Up"])
+    with tab1:
+        login()
+    with tab2:
+        signup()
+else:
+    dispute_form()
 
-        st.markdown("## 🏢 Choose Credit Bureau")
-        bureau_options = {
-            "Equifax": "Equifax Security & Fraud Prevention\nP.O. Box 105788\nAtlanta, GA 30348-5788",
-            "Experian": "Experian Consumer Disputes\nP.O. Box 4500\nAllen, TX 75013",
-            "TransUnion": "TransUnion Consumer Solutions\nP.O. Box 2000\nChester, PA 19016"
-        }
-        selected_bureau = st.selectbox("Credit Bureau", list(bureau_options.keys()))
-
-        st.markdown("## 📟 Account(s) You're Disputing")
-        account_fields = []
-        for i in range(st.session_state.num_accounts):
-            st.markdown(f"### 📄 Account #{i+1}")
-            cols = st.columns([1, 1])
-            with cols[0]:
-                acct_name = st.text_input(f"Account Name {i+1}", key=f"acct_name_{i}")
-            with cols[1]:
-                acct_number = st.text_input(f"Account Number {i+1}", key=f"acct_number_{i}")
-            selected_reasons = st.multiselect(f"Select Reason(s)", list(reason_texts.keys()), key=f"reasons_{i}")
-            account_fields.append((acct_name, acct_number, selected_reasons))
-
-        st.markdown("## 📅 Upload Documents")
-        st.file_uploader("Upload a Photo ID", type=["jpg", "jpeg", "png", "pdf"])
-        st.file_uploader("Upload Proof of Address", type=["jpg", "jpeg", "png", "pdf"])
-
-        submitted = st.form_submit_button("📄 Generate Dispute Letter")
-
-    if submitted:
-        sections = [
-            f"{letter_date.strftime('%B %d, %Y')}\n",
-            bureau_options[selected_bureau],
-            "",
-            f"{client_name}\n{address}\n{email}\nDOB: {dob}\nSSN (Last 4): {ssn_last4}",
-            "",
-            "Subject: Dispute of Inaccurate Accounts",
-            "",
-            "Dear Sir/Madam,",
-            "",
-            "I am disputing the following accounts on my credit report:",
-            ""
-        ]
-
-        for idx, (acct_name, acct_number, reasons) in enumerate(account_fields, 1):
-            if acct_name and acct_number and reasons:
-                sections += [
-                    "---",
-                    f"Account #{idx}",
-                    f"Creditor: {acct_name}",
-                    f"Account Number: {acct_number}",
-                    ""
-                ]
-                for r in reasons:
-                    sections.append(reason_texts[r][1])
-                    sections.append("")
-
-        sections += [
-            "I’ve attached identification and proof of address.",
-            "Please respond within 30 days as required by law.",
-            "",
-            f"Sincerely,\n{client_name}"
-        ]
-
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.set_font("Helvetica", size=12)
-
-        for section in sections:
-            for line in section.strip().split("\n"):
-                safe_line = line.encode("latin-1", "replace").decode("latin-1")
-                pdf.multi_cell(0, 8, safe_line)
-            pdf.ln(4)
-
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-            pdf.output(tmp.name)
-            tmp_path = tmp.name
-
-        insert_dispute_submission(
-            client_name, email, address, dob, ssn_last4,
-            selected_bureau,
-            "Multiple reasons per account",
-            letter_date
-        )
-
-        with open(tmp_path, "rb") as f:
-            st.download_button("\ud83d\udcc5 Download Your Dispute Letter", f, file_name="dispute_letter.pdf")
-
-    st.markdown("### \ud83d\udd0d Free Weekly Credit Report")
-    st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
 
