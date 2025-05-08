@@ -19,85 +19,69 @@ if st.session_state.num_accounts < 5:
     if st.button("➕ Add Another Account"):
         add_account()
 
-# --- Dispute Reason Texts ---
 reason_texts = {
     "Account not mine (identity theft)": (
-        "Urgent Request to Remove Fraudulent Account from Credit Report",
-        """I am writing to formally dispute an account appearing on my credit report that I did not authorize or open.
-This account is the result of identity theft. Under FCRA §605B and §609(a), I request the immediate deletion.
-Proper ID and documentation are included."""
+        "Re: Fraudulent Account Dispute – Identity Theft",
+        "I did not open or authorize the account listed. This is a clear case of identity theft. I have never had any dealings with this creditor and demand this be removed under FCRA §605B and §609(a). Supporting documentation and ID are provided."
     ),
     "Paid account still showing unpaid": (
-        "Dispute Regarding Paid Account Still Reporting as Unpaid",
-        """I am writing to dispute the inaccurate reporting of an account that I have fully paid.
-Under FCRA §623(a)(2), furnishers must correct inaccurate information. Documentation enclosed."""
+        "Re: Dispute of Paid Account Still Reporting as Unpaid",
+        "This account was paid in full, yet it continues to report as unpaid. This is inaccurate reporting and a violation of FCRA §623(a)(2). I’ve included payment proof — please update your records accordingly."
     ),
     "Never late but marked late": (
-        "Request to Correct False Late Payment Reporting",
-        """I have never submitted a late payment on this account. The record is inaccurate and violates FCRA §611.
-Please review the payment history and correct or remove the false entry."""
+        "Re: False Late Payment Reporting Dispute",
+        "This account is showing a late payment I never made. I have always paid on time. I request immediate correction under FCRA §611 to reflect the true payment history."
     ),
     "Balance is incorrect": (
-        "Incorrect Balance Dispute on Reported Account",
-        """The balance reported on this account is incorrect. It does not reflect the correct amount owed, paid, or settled.
-Please investigate and update it under FCRA §611."""
+        "Re: Incorrect Balance Being Reported",
+        "The balance listed for this account is wrong. It does not reflect my actual payment or current status. Please investigate and correct this per FCRA §611."
     ),
     "Account was settled but shows as charged-off": (
-        "Dispute Regarding Settled Account Incorrectly Marked as Charged-Off",
-        """This account was legally settled, but it's reported as charged-off.
-Under FCRA §623(a), this is incorrect reporting. Please correct it to 'settled'."""
+        "Re: Settled Account Reported as Charged-Off",
+        "This account was legally settled, yet it’s being reported as charged-off. This is misleading and inaccurate. Update the status to reflect 'settled' under FCRA §623(a)."
     ),
     "Re-aged account / illegally reset": (
-        "Dispute of Re-aged Account in Violation of Federal Law",
-        """This account appears to have been re-aged. The date of first delinquency should remain fixed.
-Under FCRA §605(c), please correct the reporting date or remove the account."""
+        "Re: Dispute of Re-Aged Account in Violation of FCRA",
+        "The date of first delinquency on this account has been reset, which is illegal re-aging. This violates FCRA §605(c). Please correct or remove the account immediately."
     ),
     "Duplicate account on report": (
-        "Dispute of Duplicate Account Entry on Credit Report",
-        """This account appears more than once with nearly identical details, inflating my debt unfairly.
-Under FCRA §611, I request removal of the duplicate entry."""
+        "Re: Duplicate Account Reporting Dispute",
+        "This account appears multiple times on my credit report with the same details. It’s artificially inflating my debt. Please remove the duplicate per FCRA §611."
     ),
     "Account included in bankruptcy": (
-        "Dispute of Bankruptcy-Related Account Reporting",
-        """This account was discharged in bankruptcy and must be reported as such.
-Per FCRA §1681c, please update the status to 'included in bankruptcy' with a $0 balance."""
+        "Re: Account Included in Bankruptcy Still Reporting",
+        "This account was discharged in bankruptcy and should reflect that status. As required under FCRA §1681c, update this account to show ‘included in bankruptcy’ with a $0 balance."
     ),
     "Fraudulent account": (
-        "Urgent Dispute - Fraudulent Account Reporting",
-        """I am disputing a fraudulent account on my credit report. I did not open or authorize this tradeline.
-Under FCRA §605B and §623(a)(6), I request its removal. Supporting documents attached."""
+        "Re: Immediate Removal of Fraudulent Account",
+        "I am disputing this account as fraudulent. I did not authorize or open it, and it does not belong to me. Under FCRA §605B and §623(a)(6), this tradeline must be removed."
     ),
     "I was not an authorized user": (
-        "Dispute – Inaccurate Authorized User Status",
-        """I was never added to this account by the primary user and should not be listed.
-Under FCRA §611 and §623, please remove this tradeline immediately."""
+        "Re: Unauthorized User Account Dispute",
+        "I was never added to this account as an authorized user. I had no permission, access, or benefit from it. Please remove this listing under FCRA §611 and §623."
     ),
     "Incorrect payment history": (
-        "Request for Correction of Inaccurate Payment History",
-        """The payment history reported for this account contains errors.
-Please investigate and correct any inaccuracies under FCRA §611."""
+        "Re: Dispute of Inaccurate Payment History",
+        "The payment history on this account is incorrect and misrepresents my financial behavior. I request a full investigation and correction in accordance with FCRA §611."
     ),
     "Account already paid or settled": (
-        "Dispute of Account Reported as Unpaid Despite Settlement",
-        """This account has been paid or legally settled, yet is still reported as open or delinquent.
-Please update to reflect a $0 balance and correct status under FCRA §623(a)."""
+        "Re: Paid/Settled Account Still Reporting Open",
+        "This account was either fully paid or settled — yet it's still showing as unpaid or delinquent. This must be updated to show $0 balance under FCRA §623(a)."
     ),
     "Wrong account status reported": (
-        "Correction Request for Wrong Account Status",
-        """The current status reflects 'charged-off' or '120 days late' which is incorrect.
-Please verify and correct this under FCRA §611."""
+        "Re: Incorrect Account Status Needs Correction",
+        "The current status (e.g., 'charged-off', 'late') is incorrect. Please investigate and correct this reporting under FCRA §611."
     ),
     "Outdated account info (older than 7-10 years)": (
-        "Request for Removal of Outdated Account Information",
-        """This negative account has exceeded the legal reporting limit of 7 years (or 10 for bankruptcy).
-Please remove it under FCRA §605(a)."""
+        "Re: Removal Request for Outdated Negative Account",
+        "This account has surpassed the legal reporting limits — 7 years for most accounts, 10 years for bankruptcy. Please remove it as required by FCRA §605(a)."
     ),
     "Charge-off account still updating monthly": (
-        "Illegal Re-aging of Charged-Off Account",
-        """A charged-off account should not continue updating monthly unless active payments are being made.
-Please investigate for re-aging violations under FCRA §605 and §623(a)(2)."""
+        "Re: Improper Updating of Charged-Off Account",
+        "This account was charged off but is still being updated monthly, which is misleading and may violate re-aging restrictions. Please stop further updates and correct the status under FCRA §605 and §623(a)(2)."
     )
 }
+
 
 # --- FORM ---
 with st.form("dispute_form"):
