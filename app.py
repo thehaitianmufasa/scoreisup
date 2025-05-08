@@ -43,15 +43,16 @@ elif st.session_state["login_mode"] == "signup":
     signup_email = st.text_input("Email", key="signup_email")
     signup_password = st.text_input("Password", type="password", key="signup_password")
     if st.button("Create Account"):
-        if get_user_by_email(signup_email):
-            st.error("Account already exists.")
+    if get_user_by_email(signup_email):
+        st.error("Account already exists.")
+    else:
+        success = insert_user(signup_email, signup_password)
+        if success:
+            st.success("Account created! Please log in.")
+            st.session_state["login_mode"] = "login"
+            st.stop()  # Stop instead of rerunning
         else:
-            success = insert_user(signup_email, signup_password)
-            if success:
-                st.success("Account created! Please press 'Go to Login' to continue.")
-                st.session_state["login_mode"] = "login"
-            else:
-                st.error("Error creating account.")
+            st.error("Error creating account.")
     if st.button("Go to Login"):
         st.session_state["login_mode"] = "login"
 
