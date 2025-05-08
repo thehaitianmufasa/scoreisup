@@ -1,43 +1,9 @@
 import streamlit as st
 from db import insert_user, get_user_by_email, insert_dispute_submission
+import bcrypt
 from fpdf import FPDF
 import tempfile
 import datetime
-import mysql.connector
-import bcrypt
-
-# --- Optional Admin Setup ---
-def create_admin_account(email="admin@test.com", password="admin123"):
-    try:
-        connection = mysql.connector.connect(
-            host=st.secrets["MYSQL_HOST"],
-            port=int(st.secrets["MYSQL_PORT"]),
-            user=st.secrets["MYSQL_USER"],
-            password=st.secrets["MYSQL_PASSWORD"],
-            database=st.secrets["MYSQL_DATABASE"]
-        )
-        cursor = connection.cursor()
-        cursor.execute("SELECT COUNT(*) FROM users WHERE email = %s", (email,))
-        if cursor.fetchone()[0] == 0:
-            hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            cursor.execute(
-                "INSERT INTO users (email, password_hash, created_at) VALUES (%s, %s, NOW())",
-                (email, hashed_pw)
-            )
-            connection.commit()
-            st.success("✅ Admin account created!")
-        else:
-            st.info("⚠️ Admin already exists.")
-    except Exception as e:
-        st.error(f"Admin setup error: {e}")
-    finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
-
-# --- Trigger admin creation ---
-if st.sidebar.button("🔧 Create Admin"):
-    create_admin_account()
 
 # --- Session Defaults ---
 if "user" not in st.session_state:
@@ -82,16 +48,14 @@ elif st.session_state["login_mode"] == "signup":
         else:
             success = insert_user(signup_email, signup_password)
             if success:
-                st.session_state["user"] = signup_email
+                st.success("Account created! Please log in.")
                 st.session_state["login_mode"] = "login"
-                st.success("Account created! Redirecting...")
-                st.stop()
+                st.experimental_rerun()
             else:
                 st.error("Error creating account.")
     if st.button("Go to Login"):
         st.session_state["login_mode"] = "login"
         st.experimental_rerun()
-
 
 # --- Protected Area ---
 if st.session_state["user"]:
@@ -115,7 +79,7 @@ if st.session_state["user"]:
         ),
         "Paid account still showing unpaid": (
             "Re: Dispute of Paid Account Still Reporting as Unpaid",
-            "This account was paid in full, yet it continues to report as unpaid. This is inaccurate reporting and a violation of FCRA §623(a)(2). I've included payment proof — please update your records accordingly."
+            "This account was paid in full, yet it continues to report as unpaid. This is inaccurate reporting and a violation of FCRA §623(a)(2). I’ve included payment proof — please update your records accordingly."
         ),
         "Never late but marked late": (
             "Re: False Late Payment Reporting Dispute",
@@ -127,9 +91,9 @@ if st.session_state["user"]:
         ),
         "Account was settled but shows as charged-off": (
             "Re: Settled Account Reported as Charged-Off",
-            "This account was legally settled, yet it's being reported as charged-off. This is misleading and inaccurate. Update the status to reflect 'settled' under FCRA §623(a)."
+            "This account was legally settled, yet it’s being reported as charged-off. This is misleading and inaccurate. Update the status to reflect 'settled' under FCRA §623(a)."
         )
-        # Add the rest of your reasons here...
+        # Add more as needed
     }
 
     with st.form("dispute_form"):
@@ -149,7 +113,7 @@ if st.session_state["user"]:
         }
         selected_bureau = st.selectbox("Credit Bureau", list(bureau_options.keys()))
 
-        st.markdown("## 📟 Account(s) You're Disputing")
+        st.markdown("## 📜 Account(s) You're Disputing")
         account_fields = []
         for i in range(st.session_state.num_accounts):
             st.markdown(f"### 📄 Account #{i+1}")
@@ -165,7 +129,7 @@ if st.session_state["user"]:
         id_upload = st.file_uploader("Upload a Photo ID", type=["jpg", "jpeg", "png", "pdf"])
         proof_upload = st.file_uploader("Upload Proof of Address", type=["jpg", "jpeg", "png", "pdf"])
 
-        submitted = st.form_submit_button("📟 Generate Dispute Letter")
+        submitted = st.form_submit_button("📄 Generate Dispute Letter")
 
     if submitted:
         sections = [
@@ -227,8 +191,7 @@ if st.session_state["user"]:
         )
 
         with open(tmp_path, "rb") as f:
-            st.download_button("\ud83d\udcc5 Download Your Dispute Letter", f, file_name="dispute_letter.pdf")
+            st.download_button("📥 Download Your Dispute Letter", f, file_name="dispute_letter.pdf")
 
-    st.markdown("### \ud83d\udd0d Get Your Free Weekly Credit Report")
+    st.markdown("### 🔍 Get Your Free Weekly Credit Report")
     st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
-
