@@ -4,6 +4,43 @@ import bcrypt
 from fpdf import FPDF
 import tempfile
 import datetime
+import mysql.connector
+import bcrypt
+import streamlit as st
+
+# --- Optional Admin Setup ---
+def create_admin_account(email="admin@test.com", password="admin123"):
+    try:
+        connection = mysql.connector.connect(
+            host=st.secrets["MYSQL_HOST"],
+            port=int(st.secrets["MYSQL_PORT"]),
+            user=st.secrets["MYSQL_USER"],
+            password=st.secrets["MYSQL_PASSWORD"],
+            database=st.secrets["MYSQL_DATABASE"]
+        )
+        cursor = connection.cursor()
+        cursor.execute("SELECT COUNT(*) FROM users WHERE email = %s", (email,))
+        if cursor.fetchone()[0] == 0:
+            hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            cursor.execute(
+                "INSERT INTO users (email, password_hash, created_at) VALUES (%s, %s, NOW())",
+                (email, hashed_pw)
+            )
+            connection.commit()
+            st.success("✅ Admin account created!")
+        else:
+            st.info("⚠️ Admin already exists.")
+    except Exception as e:
+        st.error(f"Admin setup error: {e}")
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+# --- Trigger admin creation ---
+if st.sidebar.button("🔧 Create Admin"):
+    create_admin_account()
+
 
 # --- Session Defaults ---
 if "user" not in st.session_state:
