@@ -1,9 +1,9 @@
-
 from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
 import streamlit as st
 import bcrypt
+
 
 def insert_dispute_submission(
     name, email, address, dob, ssn_last4,
@@ -15,6 +15,8 @@ def insert_dispute_submission(
             dob = datetime.strptime(dob, "%m/%d/%Y").strftime("%Y-%m-%d")
         if isinstance(letter_date, str):
             letter_date = datetime.strptime(letter_date, "%m/%d/%Y").strftime("%Y-%m-%d")
+        else:
+            letter_date = letter_date.strftime("%Y-%m-%d")
 
         connection = mysql.connector.connect(
             host=st.secrets["MYSQL_HOST"],
@@ -41,13 +43,14 @@ def insert_dispute_submission(
             return True
 
     except Error as e:
-        st.error(f"MySQL Error: {e}")
+        st.error(f"MySQL Error (Insert Dispute): {e}")
         return False
 
     finally:
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
 
 def insert_user(email, password):
     try:
@@ -61,9 +64,8 @@ def insert_user(email, password):
 
         if connection.is_connected():
             cursor = connection.cursor()
-            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-            # DO NOT insert `id` if your table already auto-generates it
             insert_query = """
                 INSERT INTO users (email, password_hash, created_at)
                 VALUES (%s, %s, NOW())
@@ -80,6 +82,7 @@ def insert_user(email, password):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
 
 def get_user_by_email(email):
     try:
