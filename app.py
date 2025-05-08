@@ -14,6 +14,11 @@ def add_account():
     if st.session_state.num_accounts < 5:
         st.session_state.num_accounts += 1
 
+# --- Add Account Button (OUTSIDE the form) ---
+if st.session_state.num_accounts < 5:
+    if st.button("➕ Add Another Account"):
+        add_account()
+
 # --- Form ---
 with st.form("dispute_form"):
     client_name = st.text_input("Full Name")
@@ -30,7 +35,7 @@ with st.form("dispute_form"):
     }
     selected_bureau = st.selectbox("Choose Credit Bureau", list(bureau_options.keys()))
 
-    # Account fields (dynamic)
+    # Dynamic Account Fields
     account_fields = []
     for i in range(st.session_state.num_accounts):
         st.markdown(f"---\n### 🧾 Account #{i+1}")
