@@ -62,14 +62,14 @@ def insert_user(email, password):
 
         if connection.is_connected():
             cursor = connection.cursor()
-            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            user_id = str(uuid.uuid4())  # 🔑 generate unique string-based ID
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            created_at = datetime.now().strftime("%Y-%m-%d")
 
             insert_query = """
-                INSERT INTO users (id, email, password_hash, created_at)
-                VALUES (%s, %s, %s, NOW())
+                INSERT INTO users (email, password, created_at)
+                VALUES (%s, %s, %s)
             """
-            cursor.execute(insert_query, (user_id, email, password_hash))
+            cursor.execute(insert_query, (email, password_hash, created_at))
             connection.commit()
             return True
 
@@ -81,8 +81,6 @@ def insert_user(email, password):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
-
-
 
 def get_user_by_email(email):
     try:
@@ -96,7 +94,7 @@ def get_user_by_email(email):
 
         if connection.is_connected():
             cursor = connection.cursor()
-            query = "SELECT id, email, password_hash FROM users WHERE email = %s"
+            query = "SELECT id, email, password FROM users WHERE email = %s"
             cursor.execute(query, (email,))
             result = cursor.fetchone()
             return result
@@ -109,4 +107,3 @@ def get_user_by_email(email):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
-
