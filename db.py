@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
@@ -62,8 +63,13 @@ def insert_user(email, password):
         if connection.is_connected():
             cursor = connection.cursor()
             password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            insert_query = "INSERT INTO users (id, email, password_hash, created_at) VALUES (NULL, %s, %s, NOW())"
-            cursor.execute(insert_query, (email, password_hash))
+            user_id = str(uuid.uuid4())  # 🔑 generate unique string-based ID
+
+            insert_query = """
+                INSERT INTO users (id, email, password_hash, created_at)
+                VALUES (%s, %s, %s, NOW())
+            """
+            cursor.execute(insert_query, (user_id, email, password_hash))
             connection.commit()
             return True
 
@@ -75,6 +81,7 @@ def insert_user(email, password):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
 
 
 def get_user_by_email(email):
