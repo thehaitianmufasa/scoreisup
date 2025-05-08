@@ -72,7 +72,7 @@ def create_dispute_table():
                 bureau TEXT,
                 dispute_reasons TEXT,
                 letter_date DATE,
-                created_at DATE DEFAULT CURRENT_DATE
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
             """
             cursor.execute(create_query)
@@ -86,4 +86,3 @@ def create_dispute_table():
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
-
