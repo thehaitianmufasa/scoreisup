@@ -57,11 +57,13 @@ if submit:
         pdf.multi_cell(0, 10, name)
 
         pdf_output = io.BytesIO()
-        pdf_output.write(pdf.output(dest="S").encode("latin1"))
+        pdf_data = pdf.output(dest="S").encode("latin1")
+        pdf_output.write(pdf_data)
+        pdf_output.seek(0)
 
         st.success("🎉 Dispute letter generated successfully!")
         st.download_button("📎 Download Dispute Letter PDF",
-                           data=pdf_output.getvalue(),
+                           data=pdf_output,
                            file_name="dispute_letter.pdf",
                            mime="application/pdf")
     else:
