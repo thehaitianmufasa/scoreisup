@@ -19,7 +19,7 @@ if st.session_state.num_accounts < 5:
     if st.button("➕ Add Another Account"):
         add_account()
 
-# --- Dispute Reason Texts (Must be Accessible Globally) ---
+# --- Dispute Reason Texts ---
 reason_texts = {
     "Account not mine (identity theft)": (
         "Urgent Request to Remove Fraudulent Account from Credit Report",
@@ -99,7 +99,7 @@ Please investigate for re-aging violations under FCRA §605 and §623(a)(2)."""
     )
 }
 
-# --- MAIN FORM ---
+# --- FORM ---
 with st.form("dispute_form"):
     st.markdown("## 🔒 Your Information")
     client_name = st.text_input("Full Name")
@@ -129,17 +129,19 @@ with st.form("dispute_form"):
         account_fields.append((acct_name, acct_number))
 
     st.markdown("## ⚖️ Reason(s) for Dispute")
-    dispute_options = list(reason_texts.keys())
-    selected_reasons = st.multiselect("Select Reason(s)", dispute_options)
+    selected_reasons = st.multiselect("Select Reason(s)", list(reason_texts.keys()))
+
+    st.markdown("## 📥 Upload Supporting Documents")
+    id_upload = st.file_uploader("Upload a Photo ID (Driver's License, Passport)", type=["jpg", "jpeg", "png", "pdf"])
+    proof_upload = st.file_uploader("Upload Proof of Address (Utility Bill, Lease, etc.)", type=["jpg", "jpeg", "png", "pdf"])
+    confirmation = st.checkbox("✅ I’ve included a copy of my ID and proof of address")
 
     submitted = st.form_submit_button("📄 Generate Dispute Letter")
 
-# --- Generate Letter ---
-if submitted and selected_reasons:
+# --- PDF GENERATION ---
+if submitted and selected_reasons and confirmation:
     subject_line = "Re: " + " & ".join([reason_texts[r][0] for r in selected_reasons])
-    combined_body = ""
-    for reason in selected_reasons:
-        combined_body += reason_texts[reason][1] + "\n\n"
+    combined_body = "\n\n".join([reason_texts[r][1] for r in selected_reasons])
 
     account_section = "\n".join([
         f"Account Name: {name}\nAccount Number: {number}\n"
@@ -153,13 +155,12 @@ if submitted and selected_reasons:
         "Dear Sir/Madam,\n",
         combined_body.strip(),
         account_section,
-        "I have attached identification and supporting documentation to validate this dispute. "
+        "I have attached a copy of my government-issued ID and proof of address to validate this dispute. "
         "Please complete your investigation and provide a response in writing within the 30-day window as required under federal law.",
         "Thank you for your time and attention to this matter.",
         f"Sincerely,\n{client_name}\nSSN (Last 4 Digits): {ssn_last4}\nDOB: {dob}\nDate: {letter_date.strftime('%B %d, %Y')}"
     ]
 
-    # Build PDF
     pdf = FPDF()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -175,7 +176,6 @@ if submitted and selected_reasons:
         pdf.output(tmp.name)
         tmp_path = tmp.name
 
-    # Save to DB
     insert_dispute_submission(
         client_name, email, address, dob, ssn_last4,
         selected_bureau,
@@ -189,4 +189,5 @@ if submitted and selected_reasons:
 # --- Footer ---
 st.markdown("### 🔍 Get Your Free Weekly Credit Report")
 st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
+
 
