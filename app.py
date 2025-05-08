@@ -1,6 +1,4 @@
 import streamlit as st
-if 'just_logged_in' not in st.session_state:
-    st.session_state.just_logged_in = False
 from datetime import datetime
 import bcrypt
 from db import insert_dispute_submission, insert_user, get_user_by_email
@@ -32,12 +30,13 @@ def login():
     email = st.text_input("Email", key="login_email")
     password = st.text_input("Password", type="password", key="login_password")
 
-    if st.button("Login"):
+    login_btn = st.button("Login")
+
+    if login_btn:
         user = get_user_by_email(email)
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = email
-            st.session_state.just_logged_in = True
         else:
             st.error("Invalid email or password.")
 
@@ -80,11 +79,6 @@ def dispute_form():
 
 # ----------------- MAIN APP -----------------
 st.title("Credit Dispute Letter Generator")
-
-# Soft rerun after login
-if st.session_state.just_logged_in:
-    st.session_state.just_logged_in = False
-    st.experimental_rerun()
 
 if st.session_state.get("logged_in"):
     st.success(f"Welcome, {st.session_state.user_email}!")
