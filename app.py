@@ -11,6 +11,12 @@ if 'user_email' not in st.session_state:
 if 'login_rerun' not in st.session_state:
     st.session_state.login_rerun = False
 
+# 🔁 Safe rerun trigger (runs only once)
+if st.session_state.login_rerun:
+    st.session_state.login_rerun = False
+    st.experimental_rerun()
+    st.stop()
+
 # ----------------- AUTHENTICATION -----------------
 def signup():
     st.subheader("Create Account")
@@ -41,7 +47,7 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
                 st.session_state.login_rerun = True
-                st.success("Login successful!")
+                st.experimental_rerun()  # triggers rerun right away
             else:
                 st.error("Invalid email or password.")
 
@@ -85,11 +91,6 @@ def dispute_form():
 # ----------------- MAIN APP -----------------
 st.title("Credit Dispute Letter Generator")
 
-# 🔁 Trigger rerun after login
-if st.session_state.login_rerun:
-    st.session_state.login_rerun = False
-    st.experimental_rerun()
-
 if st.session_state.logged_in:
     st.success(f"Welcome, {st.session_state.user_email}!")
     dispute_form()
@@ -100,4 +101,3 @@ else:
         login()
     else:
         signup()
-
