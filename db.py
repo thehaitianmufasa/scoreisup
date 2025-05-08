@@ -81,7 +81,6 @@ def insert_user(email, password):
             cursor.close()
             connection.close()
 
-
 def get_user_by_email(email):
     try:
         connection = mysql.connector.connect(
