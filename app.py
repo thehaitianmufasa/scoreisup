@@ -1,9 +1,9 @@
 import streamlit as st
 from datetime import datetime
 import bcrypt
-from db import insert_dispute_submission, create_user, get_user_by_email
+from db import insert_dispute_submission, insert_user, get_user_by_email
 
-# Session State Initialization
+# --- Session State Initialization ---
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
@@ -19,9 +19,11 @@ def signup():
         if get_user_by_email(email):
             st.warning("Email already exists.")
         else:
-            hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
-            create_user(email, hashed_pw)
-            st.success("Account created. Please log in.")
+            success = insert_user(email, password)
+            if success:
+                st.success("Account created. Please log in.")
+            else:
+                st.error("There was an error creating your account.")
 
 def login():
     st.subheader("Login")
@@ -30,13 +32,13 @@ def login():
 
     if st.button("Login"):
         user = get_user_by_email(email)
-        if user and bcrypt.checkpw(password.encode(), user['password'].encode()):
+        if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = email
             st.success("Login successful!")
             st.experimental_rerun()
         else:
-            st.error("Invalid credentials.")
+            st.error("Invalid email or password.")
 
 # ----------------- DISPUTE FORM -----------------
 def dispute_form():
@@ -54,7 +56,7 @@ def dispute_form():
 
     dispute_data = []
     for i in range(5):
-        with st.expander(f"Account #{i+1}", expanded=(i==0)):
+        with st.expander(f"Account #{i+1}", expanded=(i == 0)):
             account_name = st.text_input(f"Account Name #{i+1}", key=f"acct_name_{i}")
             account_number = st.text_input(f"Account Number #{i+1}", key=f"acct_num_{i}")
             reason = st.text_area(f"Dispute Reason #{i+1}", key=f"reason_{i}")
@@ -75,7 +77,7 @@ def dispute_form():
             )
         st.success("Dispute letters submitted successfully!")
 
-# ----------------- APP FLOW -----------------
+# ----------------- MAIN APP -----------------
 st.title("Credit Dispute Letter Generator")
 
 if not st.session_state.logged_in:
