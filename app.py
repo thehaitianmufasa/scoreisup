@@ -123,26 +123,42 @@ with st.form("dispute_form"):
     submitted = st.form_submit_button("📄 Generate Dispute Letter")
 
 # --- PDF GENERATION ---
-if submitted and selected_reasons and confirmation:
-    subject_line = "Re: " + " & ".join([reason_texts[r][0] for r in selected_reasons])
-    combined_body = "\n\n".join([reason_texts[r][1] for r in selected_reasons])
-
-    account_section = "\n".join([
-        f"Account Name: {name}\nAccount Number: {number}\n"
-        for name, number in account_fields if name and number
-    ])
-
+if submitted and selected_reasons:
     sections = [
-        f"{client_name}\n{address}\n{email}\nDOB: {dob}\n",
+        f"{letter_date.strftime('%B %d, %Y')}\n",
         bureau_options[selected_bureau],
-        f"\n{subject_line}\n",
-        "Dear Sir/Madam,\n",
-        combined_body.strip(),
-        account_section,
-        "I have attached a copy of my government-issued ID and proof of address to validate this dispute. "
-        "Please complete your investigation and provide a response in writing within the 30-day window as required under federal law.",
+        "",
+        f"{client_name}\n{address}\n{email}\nDOB: {dob}\nSSN (Last 4): {ssn_last4}",
+        "",
+        "Subject: Dispute of Multiple Inaccurate Accounts – Request for Immediate Correction",
+        "",
+        "Dear Sir/Madam,",
+        "",
+        "I am writing to formally dispute the following accounts appearing on my credit report. Each contains inaccurate, outdated, or legally improper information. I have detailed each account below along with my dispute reason and request for correction in accordance with the Fair Credit Reporting Act (FCRA).",
+        ""
+    ]
+
+    for idx, (acct_name, acct_number) in enumerate(account_fields, 1):
+        if acct_name and acct_number:
+            reason_body = "\n\n".join([reason_texts[r][1] for r in selected_reasons])
+            sections += [
+                "---",
+                f"📁 Account #{idx}",
+                f"Creditor: {acct_name}",
+                f"Account Number: {acct_number}",
+                "",
+                "Dispute Reason:",
+                reason_body,
+                ""
+            ]
+
+    sections += [
+        "I have attached a copy of my government-issued ID and proof of address to validate this dispute.",
+        "Please complete your investigation and respond in writing within the 30-day window as required by federal law.",
+        "",
         "Thank you for your time and attention to this matter.",
-        f"Sincerely,\n{client_name}\nSSN (Last 4 Digits): {ssn_last4}\nDOB: {dob}\nDate: {letter_date.strftime('%B %d, %Y')}"
+        "",
+        f"Sincerely,\n{client_name}"
     ]
 
     pdf = FPDF()
@@ -169,6 +185,7 @@ if submitted and selected_reasons and confirmation:
 
     with open(tmp_path, "rb") as f:
         st.download_button("📥 Download Your Dispute Letter", f, file_name="dispute_letter.pdf")
+
 
 # --- Footer ---
 st.markdown("### 🔍 Get Your Free Weekly Credit Report")
