@@ -4,19 +4,17 @@ from mysql.connector import Error
 import streamlit as st
 import bcrypt
 
-
 def insert_dispute_submission(
     name, email, address, dob, ssn_last4,
     bureau, dispute_reasons, letter_date
 ):
     connection = None
     try:
+        # Convert date strings if needed
         if isinstance(dob, str):
             dob = datetime.strptime(dob, "%m/%d/%Y").strftime("%Y-%m-%d")
         if isinstance(letter_date, str):
             letter_date = datetime.strptime(letter_date, "%m/%d/%Y").strftime("%Y-%m-%d")
-        else:
-            letter_date = letter_date.strftime("%Y-%m-%d")
 
         connection = mysql.connector.connect(
             host=st.secrets["MYSQL_HOST"],
@@ -26,31 +24,29 @@ def insert_dispute_submission(
             database=st.secrets["MYSQL_DATABASE"]
         )
 
-        if connection.is_connected():
-            cursor = connection.cursor()
-            insert_query = """
-            INSERT INTO dispute_submissions (
-                name, email, address, dob, ssn_last4,
-                bureau, dispute_reasons, letter_date
-            )
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            cursor.execute(insert_query, (
-                name, email, address, dob, ssn_last4,
-                bureau, dispute_reasons, letter_date
-            ))
-            connection.commit()
-            return True
+        cursor = connection.cursor()
+        insert_query = """
+        INSERT INTO dispute_submissions (
+            name, email, address, dob, ssn_last4,
+            bureau, dispute_reasons, letter_date
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (
+            name, email, address, dob, ssn_last4,
+            bureau, dispute_reasons, letter_date
+        ))
+        connection.commit()
+        return True
 
     except Error as e:
-        st.error(f"MySQL Error (Insert Dispute): {e}")
+        st.error(f"MySQL Error: {e}")
         return False
 
     finally:
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
-
 
 def insert_user(email, password):
     try:
@@ -62,17 +58,16 @@ def insert_user(email, password):
             database=st.secrets["MYSQL_DATABASE"]
         )
 
-        if connection.is_connected():
-            cursor = connection.cursor()
-            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        cursor = connection.cursor()
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-            insert_query = """
-                INSERT INTO users (email, password_hash, created_at)
-                VALUES (%s, %s, NOW())
-            """
-            cursor.execute(insert_query, (email, password_hash))
-            connection.commit()
-            return True
+        insert_query = """
+            INSERT INTO users (email, password_hash, created_at)
+            VALUES (%s, %s, NOW())
+        """
+        cursor.execute(insert_query, (email, password_hash))
+        connection.commit()
+        return True
 
     except Error as e:
         st.error(f"MySQL Error (Insert User): {e}")
@@ -82,7 +77,6 @@ def insert_user(email, password):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
-
 
 def get_user_by_email(email):
     try:
@@ -94,12 +88,11 @@ def get_user_by_email(email):
             database=st.secrets["MYSQL_DATABASE"]
         )
 
-        if connection.is_connected():
-            cursor = connection.cursor()
-            query = "SELECT id, email, password_hash FROM users WHERE email = %s"
-            cursor.execute(query, (email,))
-            result = cursor.fetchone()
-            return result
+        cursor = connection.cursor()
+        query = "SELECT id, email, password_hash FROM users WHERE email = %s"
+        cursor.execute(query, (email,))
+        result = cursor.fetchone()
+        return result
 
     except Error as e:
         st.error(f"MySQL Error (Get User): {e}")
@@ -109,3 +102,4 @@ def get_user_by_email(email):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
