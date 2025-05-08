@@ -1,12 +1,10 @@
 import streamlit as st
 from db import insert_user, get_user_by_email, insert_dispute_submission
-import bcrypt
 from fpdf import FPDF
 import tempfile
 import datetime
 import mysql.connector
 import bcrypt
-import streamlit as st
 
 # --- Optional Admin Setup ---
 def create_admin_account(email="admin@test.com", password="admin123"):
@@ -21,7 +19,7 @@ def create_admin_account(email="admin@test.com", password="admin123"):
         cursor = connection.cursor()
         cursor.execute("SELECT COUNT(*) FROM users WHERE email = %s", (email,))
         if cursor.fetchone()[0] == 0:
-            hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             cursor.execute(
                 "INSERT INTO users (email, password_hash, created_at) VALUES (%s, %s, NOW())",
                 (email, hashed_pw)
@@ -40,7 +38,6 @@ def create_admin_account(email="admin@test.com", password="admin123"):
 # --- Trigger admin creation ---
 if st.sidebar.button("🔧 Create Admin"):
     create_admin_account()
-
 
 # --- Session Defaults ---
 if "user" not in st.session_state:
@@ -94,6 +91,7 @@ elif st.session_state["login_mode"] == "signup":
     if st.button("Go to Login"):
         st.session_state["login_mode"] = "login"
         st.experimental_rerun()
+
 
 # --- Protected Area ---
 if st.session_state["user"]:
