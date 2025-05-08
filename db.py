@@ -62,14 +62,13 @@ def insert_user(email, password):
 
         if connection.is_connected():
             cursor = connection.cursor()
-            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            created_at = datetime.now().strftime("%Y-%m-%d")
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
             insert_query = """
-                INSERT INTO users (email, password, created_at)
-                VALUES (%s, %s, %s)
+                INSERT INTO users (email, password_hash, created_at)
+                VALUES (%s, %s, NOW())
             """
-            cursor.execute(insert_query, (email, password_hash, created_at))
+            cursor.execute(insert_query, (email, password_hash))
             connection.commit()
             return True
 
@@ -81,6 +80,7 @@ def insert_user(email, password):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
 
 def get_user_by_email(email):
     try:
