@@ -134,7 +134,7 @@ if submitted and selected_reasons:
         "",
         "Dear Sir/Madam,",
         "",
-        "I am writing to formally dispute the following accounts appearing on my credit report. Each contains inaccurate, outdated, or legally improper information. I have detailed each account below along with my dispute reason and request for correction in accordance with the Fair Credit Reporting Act (FCRA).",
+        "I am writing to formally dispute the following accounts appearing on my credit report. Each contains inaccurate, outdated, or legally improper information. I have detailed each account below along with my dispute request for correction in accordance with the Fair Credit Reporting Act (FCRA).",
         ""
     ]
 
@@ -143,11 +143,10 @@ if submitted and selected_reasons:
             reason_body = "\n\n".join([reason_texts[r][1] for r in selected_reasons])
             sections += [
                 "---",
-                f"📁 Account #{idx}",
+                f"Account #{idx}",
                 f"Creditor: {acct_name}",
                 f"Account Number: {acct_number}",
                 "",
-                "Dispute Reason:",
                 reason_body,
                 ""
             ]
