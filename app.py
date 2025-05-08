@@ -3,7 +3,7 @@ from datetime import datetime
 import bcrypt
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
-# --- Session State Setup ---
+# --- Session State Initialization ---
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
@@ -11,12 +11,14 @@ if 'user_email' not in st.session_state:
 if 'just_logged_in' not in st.session_state:
     st.session_state.just_logged_in = False
 
-# ----------------- MAIN TITLE & SAFE RERUN -----------------
+# ----------------- Safe Rerun Trigger -----------------
 st.title("Credit Dispute Letter Generator")
 
+# 🔐 Clean rerun — must be first thing after title
 if st.session_state.just_logged_in:
     st.session_state.just_logged_in = False
     st.experimental_rerun()
+    st.stop()  # ensure clean stop after rerun
 
 # ----------------- AUTHENTICATION -----------------
 def signup():
@@ -46,7 +48,7 @@ def login():
             st.session_state.logged_in = True
             st.session_state.user_email = email
             st.session_state.just_logged_in = True
-            st.success("Login successful!")
+            return  # skip rendering anything else
         else:
             st.error("Invalid email or password.")
 
@@ -97,5 +99,6 @@ else:
         login()
     else:
         signup()
+
 
 
