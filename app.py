@@ -54,16 +54,17 @@ if st.session_state["user"] is None:
         col1, col2 = st.columns(2)
         with col1:
             if st.button("Create Account"):
-                if get_user_by_email(signup_email):
-                    st.error("An account with this email already exists.")
-                else:
-                    success = insert_user(signup_email, signup_password)
-                    if success:
-                        st.success("🎉 Account created! Please log in.")
-                        st.session_state["login_mode"] = "login"
-                        st.experimental_rerun()
-                    else:
-                        st.error("Error creating account. Please try again.")
+    if get_user_by_email(signup_email):
+        st.error("Account already exists.")
+    else:
+        success = insert_user(signup_email, signup_password)
+        if success:
+            st.session_state["user"] = signup_email
+            st.session_state["login_mode"] = "login"
+            st.success("Account created! Redirecting to login...")
+            st.stop()
+        else:
+            st.error("Error creating account.")
         with col2:
             if st.button("Go to Login"):
                 st.session_state["login_mode"] = "login"
