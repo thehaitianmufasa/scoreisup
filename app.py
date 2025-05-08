@@ -67,10 +67,8 @@ if submit:
     else:
         st.error("❌ There was an error saving your submission. Please try again.")
 
-# ✅ Footer: Credit Report Link
 st.markdown("""
 ---
 ### 🔍 Get Your Free Weekly Credit Report  
 [Visit AnnualCreditReport.com](https://www.annualcreditreport.com)
 """)
-
