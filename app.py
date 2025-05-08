@@ -6,6 +6,12 @@ from datetime import datetime
 
 st.title("📄 Credit Dispute Letter Generator")
 
+bureau_addresses = {
+    "Equifax": "Equifax Security & Fraud Prevention\nP.O. Box 105788\nAtlanta, GA 30348-5788",
+    "Experian": "Experian Consumer Disputes\nP.O. Box 4500\nAllen, TX 75013",
+    "TransUnion": "TransUnion Consumer Solutions\nP.O. Box 2000\nChester, PA 19016"
+}
+
 with st.form("dispute_form"):
     name = st.text_input("Full Name")
     email = st.text_input("Email Address")
@@ -32,6 +38,8 @@ with st.form("dispute_form"):
         "Charge-off account still updating monthly"
     ])
 
+    account_name = st.text_input("Account Name")
+    account_number = st.text_input("Account Number")
     letter_date = st.date_input("Select Letter Date", value=datetime.today())
     submit = st.form_submit_button("Generate Dispute Letter")
 
@@ -42,19 +50,32 @@ if submit:
     )
 
     if success:
+        subject_line = "Re: " + " & ".join(dispute_reasons[:2]) + " Reporting" if len(dispute_reasons) else "Re: Credit Report Dispute"
+
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Helvetica", size=12)
-        pdf.multi_cell(0, 10, f"{letter_date.strftime('%B %d, %Y')}")
-        pdf.multi_cell(0, 10, f"{name}\n{address}\nEmail: {email}\nDOB: {dob}\nSSN (Last 4): {ssn_last4}")
-        pdf.ln(5)
-        pdf.multi_cell(0, 10, f"To Whom It May Concern at {bureau},")
-        pdf.multi_cell(0, 10, "I am writing to dispute the following item(s) on my credit report:")
+        pdf.multi_cell(0, 10, f"{name}\n{address}\n\n{email}\nDOB: {dob}\n")
+        pdf.ln(2)
+        pdf.multi_cell(0, 10, bureau_addresses[bureau])
+        pdf.ln(2)
+        pdf.multi_cell(0, 10, subject_line)
+        pdf.ln(2)
+        pdf.multi_cell(0, 10, "Dear Sir/Madam,")
+        pdf.ln(4)
+
         for reason in dispute_reasons:
             pdf.multi_cell(0, 10, f"- {reason}")
-        pdf.ln(5)
-        pdf.multi_cell(0, 10, "Please investigate and correct the inaccuracies within 30 days as required by law.\n\nSincerely,")
-        pdf.multi_cell(0, 10, name)
+            pdf.ln(1)
+
+        pdf.ln(3)
+        pdf.multi_cell(0, 10, f"Account Name: {account_name}\nAccount Number: {account_number}\n")
+        pdf.ln(2)
+        pdf.multi_cell(0, 10, "I have attached identification and supporting documentation to validate this dispute. Please complete your investigation and provide a response in writing within the 30-day window as required under federal law.")
+        pdf.ln(3)
+        pdf.multi_cell(0, 10, "Thank you for your time and attention to this matter.")
+        pdf.ln(4)
+        pdf.multi_cell(0, 10, f"Sincerely,\n{name}\nSSN (Last 4 Digits): {ssn_last4}\nDOB: {dob}")
 
         pdf_output = io.BytesIO()
         pdf_output.write(pdf.output(dest="S").encode("latin-1"))
@@ -73,4 +94,5 @@ st.markdown("""
 ### 🔍 Get Your Free Weekly Credit Report  
 [Visit AnnualCreditReport.com](https://www.annualcreditreport.com)
 """)
+
 
