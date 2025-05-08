@@ -6,11 +6,17 @@ from db import insert_dispute_submission
 
 st.title("📄 Credit Dispute Letter Generator")
 
+# --- Session State for Multiple Accounts ---
+if "num_accounts" not in st.session_state:
+    st.session_state.num_accounts = 1
+
+def add_account():
+    if st.session_state.num_accounts < 5:
+        st.session_state.num_accounts += 1
+
 # --- Form ---
 with st.form("dispute_form"):
     client_name = st.text_input("Full Name")
-    account_name = st.text_input("Account Name")
-    account_number = st.text_input("Account Number (e.g., xxx-8592)")
     address = st.text_input("Mailing Address")
     dob = st.text_input("Date of Birth (MM/DD/YYYY)")
     letter_date = st.date_input("Select Letter Date", value=datetime.date.today())
@@ -24,6 +30,18 @@ with st.form("dispute_form"):
     }
     selected_bureau = st.selectbox("Choose Credit Bureau", list(bureau_options.keys()))
 
+    # Account fields (dynamic)
+    account_fields = []
+    for i in range(st.session_state.num_accounts):
+        st.markdown(f"---\n### 🧾 Account #{i+1}")
+        acct_name = st.text_input(f"Account Name {i+1}", key=f"acct_name_{i}")
+        acct_number = st.text_input(f"Account Number {i+1}", key=f"acct_number_{i}")
+        account_fields.append((acct_name, acct_number))
+
+    if st.session_state.num_accounts < 5:
+        st.form_submit_button("➕ Add Another Account", on_click=add_account)
+
+    # Dispute reasons
     dispute_options = ['Account not mine (identity theft)', 'Paid account still showing unpaid', 'Never late but marked late', 'Balance is incorrect', 'Account was settled but shows as charged-off', 'Re-aged account / illegally reset', 'Duplicate account on report', 'Account included in bankruptcy', 'Fraudulent account', 'I was not an authorized user', 'Incorrect payment history', 'Account already paid or settled', 'Wrong account status reported', 'Outdated account info (older than 7-10 years)', 'Charge-off account still updating monthly']
 
     reason_texts = {
@@ -108,11 +126,17 @@ Please investigate for re-aging violations under FCRA §605 and §623(a)(2)."""
     selected_reasons = st.multiselect("Choose Reason(s) for Dispute", dispute_options)
     submitted = st.form_submit_button("Generate Dispute Letter")
 
+# --- Generate Letter ---
 if submitted and selected_reasons:
     subject_line = "Re: " + " & ".join([reason_texts[r][0] for r in selected_reasons])
     combined_body = ""
     for reason in selected_reasons:
         combined_body += reason_texts[reason][1] + "\n\n"
+
+    account_section = "\n".join([
+        f"Account Name: {name}\nAccount Number: {number}\n"
+        for name, number in account_fields if name and number
+    ])
 
     sections = [
         f"{client_name}\n{address}\n{email}\nDOB: {dob}\n",
@@ -120,7 +144,7 @@ if submitted and selected_reasons:
         f"\n{subject_line}\n",
         "Dear Sir/Madam,\n",
         combined_body.strip(),
-        f"Account Name: {account_name}\nAccount Number: {account_number}\n",
+        account_section,
         "I have attached identification and supporting documentation to validate this dispute. "
         "Please complete your investigation and provide a response in writing within the 30-day window as required under federal law.",
         "Thank you for your time and attention to this matter.",
