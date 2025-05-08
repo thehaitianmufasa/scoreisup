@@ -30,9 +30,7 @@ def login():
     email = st.text_input("Email", key="login_email")
     password = st.text_input("Password", type="password", key="login_password")
 
-    login_button = st.button("Login")
-
-    if login_button:
+    if st.button("Login"):
         user = get_user_by_email(email)
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
@@ -81,14 +79,15 @@ def dispute_form():
 # ----------------- MAIN APP -----------------
 st.title("Credit Dispute Letter Generator")
 
-if st.session_state.logged_in:
+if st.session_state.get("logged_in"):
     st.success(f"Welcome, {st.session_state.user_email}!")
     dispute_form()
 else:
-    tab = st.radio("Select Option", ["Login", "Sign Up"])
+    tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab")
+    
     if tab == "Login":
         login()
-    elif tab == "Sign Up":
+    else:
         signup()
 
 def dispute_form():
