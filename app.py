@@ -110,20 +110,17 @@ with st.form("dispute_form"):
             acct_name = st.text_input(f"Account Name {i+1}", key=f"acct_name_{i}")
         with cols[1]:
             acct_number = st.text_input(f"Account Number {i+1}", key=f"acct_number_{i}")
-        account_fields.append((acct_name, acct_number))
-
-    st.markdown("## ⚖️ Reason(s) for Dispute")
-    selected_reasons = st.multiselect("Select Reason(s)", list(reason_texts.keys()))
+        selected_reasons = st.multiselect(f"Select Reason(s) for Account #{i+1}", list(reason_texts.keys()), key=f"reasons_{i}")
+        account_fields.append((acct_name, acct_number, selected_reasons))
 
     st.markdown("## 📥 Upload Supporting Documents")
     id_upload = st.file_uploader("Upload a Photo ID (Driver's License, Passport)", type=["jpg", "jpeg", "png", "pdf"])
     proof_upload = st.file_uploader("Upload Proof of Address (Utility Bill, Lease, etc.)", type=["jpg", "jpeg", "png", "pdf"])
-    confirmation = st.checkbox("✅ I’ve included a copy of my ID and proof of address")
 
     submitted = st.form_submit_button("📄 Generate Dispute Letter")
 
 # --- PDF GENERATION ---
-if submitted and selected_reasons:
+if submitted:
     sections = [
         f"{letter_date.strftime('%B %d, %Y')}\n",
         bureau_options[selected_bureau],
@@ -134,22 +131,22 @@ if submitted and selected_reasons:
         "",
         "Dear Sir/Madam,",
         "",
-        "I am writing to formally dispute the following accounts appearing on my credit report. Each contains inaccurate, outdated, or legally improper information. I have detailed each account below along with my dispute request for correction in accordance with the Fair Credit Reporting Act (FCRA).",
+        "I am writing to formally dispute the following accounts appearing on my credit report. Each contains inaccurate, outdated, or legally improper information. I have detailed each account below along with my dispute reason and request for correction in accordance with the Fair Credit Reporting Act (FCRA).",
         ""
     ]
 
-    for idx, (acct_name, acct_number) in enumerate(account_fields, 1):
-        if acct_name and acct_number:
-            reason_body = "\n\n".join([reason_texts[r][1] for r in selected_reasons])
+    for idx, (acct_name, acct_number, reasons) in enumerate(account_fields, 1):
+        if acct_name and acct_number and reasons:
             sections += [
                 "---",
                 f"Account #{idx}",
                 f"Creditor: {acct_name}",
                 f"Account Number: {acct_number}",
-                "",
-                reason_body,
                 ""
             ]
+            for r in reasons:
+                sections.append(reason_texts[r][1])
+                sections.append("")
 
     sections += [
         "I have attached a copy of my government-issued ID and proof of address to validate this dispute.",
@@ -178,7 +175,7 @@ if submitted and selected_reasons:
     insert_dispute_submission(
         client_name, email, address, dob, ssn_last4,
         selected_bureau,
-        ", ".join(selected_reasons),
+        "Multiple reasons per account",
         letter_date
     )
 
