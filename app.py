@@ -13,63 +13,50 @@ if "login_mode" not in st.session_state:
 
 st.title("🔐 Dispute Letter Portal")
 
-# --- Safe rerun to avoid crash ---
-if st.session_state.get("rerun_trigger", False):
-    st.session_state["rerun_trigger"] = False
-    st.experimental_rerun()
-
 # --- Logged In ---
 if st.session_state["user"]:
     st.caption(f"Logged in as: {st.session_state['user']}")
     if st.button("Logout"):
         st.session_state["user"] = None
-        st.session_state["login_mode"] = "login"
         st.experimental_rerun()
 
-# --- Auth Section ---
-if st.session_state["user"] is None:
-    if st.session_state["login_mode"] == "login":
-        st.subheader("🔐 Log In")
-        login_email = st.text_input("Email", key="login_email")
-        login_password = st.text_input("Password", type="password", key="login_password")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Log In"):
-                user = get_user_by_email(login_email)
-                if user and bcrypt.checkpw(login_password.encode('utf-8'), user[2].encode('utf-8')):
-                    st.session_state["user"] = user[1]
-                    st.success("✅ Logged in successfully!")
-                    st.experimental_rerun()
-                else:
-                    st.error("Invalid email or password.")
-        with col2:
-            if st.button("Go to Sign Up"):
-                st.session_state["login_mode"] = "signup"
-                st.experimental_rerun()
-
-    elif st.session_state["login_mode"] == "signup":
-        st.subheader("🆕 Sign Up")
-        signup_email = st.text_input("Email", key="signup_email")
-        signup_password = st.text_input("Password", type="password", key="signup_password")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Create Account"):
-    if get_user_by_email(signup_email):
-        st.error("Account already exists.")
-    else:
-        success = insert_user(signup_email, signup_password)
-        if success:
-            st.session_state["user"] = signup_email
-            st.session_state["login_mode"] = "login"
-            st.success("Account created! Redirecting to login...")
-            st.stop()
+# --- Not Logged In ---
+elif st.session_state["login_mode"] == "login":
+    st.subheader("Log In")
+    login_email = st.text_input("Email")
+    login_password = st.text_input("Password", type="password")
+    if st.button("Log In"):
+        user = get_user_by_email(login_email)
+        if user and bcrypt.checkpw(login_password.encode('utf-8'), user[2].encode('utf-8')):
+            st.session_state["user"] = user[1]
+            st.success("Login successful!")
+            st.experimental_rerun()
         else:
-            st.error("Error creating account.")
-        with col2:
-            if st.button("Go to Login"):
-                st.session_state["login_mode"] = "login"
-                st.experimental_rerun()
+            st.error("Invalid email or password.")
+    if st.button("Go to Sign Up"):
+        st.session_state["login_mode"] = "signup"
+        st.experimental_rerun()
 
+# --- Sign Up Flow ---
+elif st.session_state["login_mode"] == "signup":
+    st.subheader("Sign Up")
+    signup_email = st.text_input("Email", key="signup_email")
+    signup_password = st.text_input("Password", type="password", key="signup_password")
+    if st.button("Create Account"):
+        if get_user_by_email(signup_email):
+            st.error("Account already exists.")
+        else:
+            success = insert_user(signup_email, signup_password)
+            if success:
+                st.session_state["user"] = signup_email
+                st.session_state["login_mode"] = "login"
+                st.success("Account created! Redirecting...")
+                st.stop()
+            else:
+                st.error("Error creating account.")
+    if st.button("Go to Login"):
+        st.session_state["login_mode"] = "login"
+        st.experimental_rerun()
 
 # --- Protected Area ---
 if st.session_state["user"]:
@@ -86,8 +73,29 @@ if st.session_state["user"]:
         if st.button("➕ Add Another Account"):
             add_account()
 
-    # Load reasons
-    from dispute_reasons import reason_texts
+    reason_texts = {
+        "Account not mine (identity theft)": (
+            "Re: Fraudulent Account Dispute – Identity Theft",
+            "I did not open or authorize the account listed. This is a clear case of identity theft. I have never had any dealings with this creditor and demand this be removed under FCRA §605B and §609(a). Supporting documentation and ID are provided."
+        ),
+        "Paid account still showing unpaid": (
+            "Re: Dispute of Paid Account Still Reporting as Unpaid",
+            "This account was paid in full, yet it continues to report as unpaid. This is inaccurate reporting and a violation of FCRA §623(a)(2). I've included payment proof — please update your records accordingly."
+        ),
+        "Never late but marked late": (
+            "Re: False Late Payment Reporting Dispute",
+            "This account is showing a late payment I never made. I have always paid on time. I request immediate correction under FCRA §611 to reflect the true payment history."
+        ),
+        "Balance is incorrect": (
+            "Re: Incorrect Balance Being Reported",
+            "The balance listed for this account is wrong. It does not reflect my actual payment or current status. Please investigate and correct this per FCRA §611."
+        ),
+        "Account was settled but shows as charged-off": (
+            "Re: Settled Account Reported as Charged-Off",
+            "This account was legally settled, yet it's being reported as charged-off. This is misleading and inaccurate. Update the status to reflect 'settled' under FCRA §623(a)."
+        )
+        # Add the rest of your reasons here...
+    }
 
     with st.form("dispute_form"):
         st.markdown("## 🔒 Your Information")
@@ -119,10 +127,10 @@ if st.session_state["user"]:
             account_fields.append((acct_name, acct_number, selected_reasons))
 
         st.markdown("## 📅 Upload Supporting Documents")
-        st.file_uploader("Upload a Photo ID", type=["jpg", "jpeg", "png", "pdf"])
-        st.file_uploader("Upload Proof of Address", type=["jpg", "jpeg", "png", "pdf"])
+        id_upload = st.file_uploader("Upload a Photo ID", type=["jpg", "jpeg", "png", "pdf"])
+        proof_upload = st.file_uploader("Upload Proof of Address", type=["jpg", "jpeg", "png", "pdf"])
 
-        submitted = st.form_submit_button("📄 Generate Dispute Letter")
+        submitted = st.form_submit_button("📟 Generate Dispute Letter")
 
     if submitted:
         sections = [
@@ -188,5 +196,4 @@ if st.session_state["user"]:
 
     st.markdown("### \ud83d\udd0d Get Your Free Weekly Credit Report")
     st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
-
 
