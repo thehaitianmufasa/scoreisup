@@ -18,7 +18,8 @@ if st.session_state["user"]:
     st.caption(f"Logged in as: {st.session_state['user']}")
     if st.button("Logout"):
         st.session_state["user"] = None
-        st.experimental_rerun()
+        st.session_state["_rerun_trigger"] = True
+        st.stop()
 
 # --- Not Logged In ---
 elif st.session_state["login_mode"] == "login":
@@ -30,12 +31,14 @@ elif st.session_state["login_mode"] == "login":
         if user and bcrypt.checkpw(login_password.encode('utf-8'), user[2].encode('utf-8')):
             st.session_state["user"] = user[1]
             st.success("Login successful!")
-            st.experimental_rerun()
+            st.session_state["_rerun_trigger"] = True
+            st.stop()
         else:
             st.error("Invalid email or password.")
     if st.button("Go to Sign Up"):
         st.session_state["login_mode"] = "signup"
-        st.experimental_rerun()
+        st.session_state["_rerun_trigger"] = True
+        st.stop()
 
 # --- Sign Up Flow ---
 elif st.session_state["login_mode"] == "signup":
