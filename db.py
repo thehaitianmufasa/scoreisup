@@ -62,8 +62,8 @@ def insert_user(email, password):
         if connection.is_connected():
             cursor = connection.cursor()
             password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-            insert_query = "INSERT INTO users (email, password_hash) VALUES (%s, %s)"
-            cursor.execute(insert_query, (email, password_hash))
+            insert_query = "INSERT INTO users (id, email, password_hash, created_at) VALUES (NULL, %s, %s, NOW())"
+cursor.execute(insert_query, (email, password_hash))
             connection.commit()
             return True
 
