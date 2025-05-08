@@ -65,10 +65,10 @@ def insert_user(email, password):
             password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
             insert_query = """
-                INSERT INTO users (email, password_hash, created_at)
-                VALUES (%s, %s, NOW())
+                INSERT INTO users (id, email, password_hash, created_at)
+                VALUES (%s, %s, %s, NOW())
             """
-            cursor.execute(insert_query, (email, password_hash))
+            cursor.execute(insert_query, (None, email, password_hash))  # Pass None for 'id'
             connection.commit()
             return True
 
