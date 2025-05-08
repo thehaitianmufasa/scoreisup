@@ -46,3 +46,59 @@ def insert_dispute_submission(
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
+import bcrypt
+
+def insert_user(email, password):
+    try:
+        connection = mysql.connector.connect(
+            host=st.secrets["MYSQL_HOST"],
+            port=int(st.secrets["MYSQL_PORT"]),
+            user=st.secrets["MYSQL_USER"],
+            password=st.secrets["MYSQL_PASSWORD"],
+            database=st.secrets["MYSQL_DATABASE"]
+        )
+
+        if connection.is_connected():
+            cursor = connection.cursor()
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            insert_query = "INSERT INTO users (email, password_hash) VALUES (%s, %s)"
+            cursor.execute(insert_query, (email, password_hash))
+            connection.commit()
+            return True
+
+    except Error as e:
+        st.error(f"MySQL Error (Insert User): {e}")
+        return False
+
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+def get_user_by_email(email):
+    try:
+        connection = mysql.connector.connect(
+            host=st.secrets["MYSQL_HOST"],
+            port=int(st.secrets["MYSQL_PORT"]),
+            user=st.secrets["MYSQL_USER"],
+            password=st.secrets["MYSQL_PASSWORD"],
+            database=st.secrets["MYSQL_DATABASE"]
+        )
+
+        if connection.is_connected():
+            cursor = connection.cursor()
+            query = "SELECT id, email, password_hash FROM users WHERE email = %s"
+            cursor.execute(query, (email,))
+            result = cursor.fetchone()
+            return result
+
+    except Error as e:
+        st.error(f"MySQL Error (Get User): {e}")
+        return None
+
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
