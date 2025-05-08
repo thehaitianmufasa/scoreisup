@@ -9,8 +9,6 @@ st.title("📄 Credit Dispute Letter Generator")
 # --- Form ---
 with st.form("dispute_form"):
     client_name = st.text_input("Full Name")
-    account_name = st.text_input("Account Name")
-    account_number = st.text_input("Account Number (e.g., xxx-8592)")
     address = st.text_input("Mailing Address")
     dob = st.text_input("Date of Birth (MM/DD/YYYY)")
     letter_date = st.date_input("Select Letter Date", value=datetime.date.today())
@@ -105,22 +103,35 @@ Please investigate for re-aging violations under FCRA §605 and §623(a)(2)."""
         )
     }
 
-    selected_reasons = st.multiselect("Choose Reason(s) for Dispute", dispute_options)
+    account_data = []
+    for i in range(1, 6):
+        with st.expander(f"📁 Account {i} (optional)"):
+            acct_name = st.text_input(f"Account Name {i}", key=f"acct_name_{i}")
+            acct_number = st.text_input(f"Account Number {i} (e.g., xxx-8592)", key=f"acct_number_{i}")
+            acct_reasons = st.multiselect(f"Dispute Reason(s) for Account {i}", dispute_options, key=f"reasons_{i}")
+            if acct_name and acct_number and acct_reasons:
+                account_data.append({
+                    "name": acct_name,
+                    "number": acct_number,
+                    "reasons": acct_reasons
+                })
+
     submitted = st.form_submit_button("Generate Dispute Letter")
 
-if submitted and selected_reasons:
-    subject_line = "Re: " + " & ".join([reason_texts[r][0] for r in selected_reasons])
+if submitted and account_data:
     combined_body = ""
-    for reason in selected_reasons:
-        combined_body += reason_texts[reason][1] + "\n\n"
+    for account in account_data:
+        subject_line = " & ".join([reason_texts[r][0] for r in account["reasons"]])
+        combined_body += f"Account Name: {account['name']}\nAccount Number: {account['number']}\n"
+        combined_body += f"Subject: {subject_line}\n"
+        for reason in account["reasons"]:
+            combined_body += reason_texts[reason][1] + "\n\n"
 
     sections = [
         f"{client_name}\n{address}\n{email}\nDOB: {dob}\n",
         bureau_options[selected_bureau],
-        f"\n{subject_line}\n",
         "Dear Sir/Madam,\n",
         combined_body.strip(),
-        f"Account Name: {account_name}\nAccount Number: {account_number}\n",
         "I have attached identification and supporting documentation to validate this dispute. "
         "Please complete your investigation and provide a response in writing within the 30-day window as required under federal law.",
         "Thank you for your time and attention to this matter.",
@@ -142,11 +153,10 @@ if submitted and selected_reasons:
         pdf.output(tmp.name)
         tmp_path = tmp.name
 
-    # Save to MySQL
     insert_dispute_submission(
         client_name, email, address, dob, ssn_last4,
         selected_bureau,
-        ", ".join(selected_reasons),
+        ", ".join([r for acct in account_data for r in acct["reasons"]]),
         letter_date
     )
 
@@ -155,3 +165,13 @@ if submitted and selected_reasons:
 
 st.markdown("### 🔍 Get Your Free Weekly Credit Report")
 st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
+
+st.markdown("---")
+st.subheader("📌 Tips for Faster Resolution")
+st.markdown("""
+- 🗌 Include a copy of your **government-issued ID** and a recent **utility bill**.
+- 🖍️ Highlight the disputed item(s) directly on your **credit report copy if sending with**.
+- 📬 Send letters via **certified mail with return receipt** for tracking.
+- ⏳ Follow up with the bureau if you don't receive a response within **30 days**.
+""")
+
