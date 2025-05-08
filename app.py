@@ -57,8 +57,8 @@ if submit:
         pdf.multi_cell(0, 10, name)
 
         pdf_output = io.BytesIO()
-        pdf_data = pdf.output(dest="S").encode("latin1")
-        pdf_output.write(pdf_data)
+        pdf_output_bytes = bytes(pdf.output(dest="S"), encoding="latin1")
+        pdf_output.write(pdf_output_bytes)
         pdf_output.seek(0)
 
         st.success("🎉 Dispute letter generated successfully!")
