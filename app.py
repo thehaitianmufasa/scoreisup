@@ -11,11 +11,13 @@ if 'user_email' not in st.session_state:
 if 'login_rerun' not in st.session_state:
     st.session_state.login_rerun = False
 
-# 🔁 Safe rerun trigger (runs only once)
-if st.session_state.login_rerun:
+# ----------------- MAIN APP START -----------------
+st.title("Credit Dispute Letter Generator")
+
+# ✅ Safe rerun outside of form (no crash)
+if st.session_state.get("login_rerun", False):
     st.session_state.login_rerun = False
     st.experimental_rerun()
-    st.stop()
 
 # ----------------- AUTHENTICATION -----------------
 def signup():
@@ -46,8 +48,8 @@ def login():
             if user and bcrypt.checkpw(password.encode(), user[2].encode()):
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
-                st.session_state.login_rerun = True
-                st.experimental_rerun()  # triggers rerun right away
+                st.session_state.login_rerun = True  # Flag to rerun on next render
+                st.success("Login successful!")
             else:
                 st.error("Invalid email or password.")
 
@@ -88,15 +90,12 @@ def dispute_form():
             )
         st.success("Dispute letters submitted successfully!")
 
-# ----------------- MAIN APP -----------------
-st.title("Credit Dispute Letter Generator")
-
+# ----------------- ROUTING -----------------
 if st.session_state.logged_in:
     st.success(f"Welcome, {st.session_state.user_email}!")
     dispute_form()
 else:
     tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab")
-    
     if tab == "Login":
         login()
     else:
