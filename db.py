@@ -63,11 +63,12 @@ def insert_user(email, password):
             cursor = connection.cursor()
             password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
+            # DO NOT insert `id` if your table already auto-generates it
             insert_query = """
-                INSERT INTO users (id, email, password_hash, created_at)
-                VALUES (%s, %s, %s, NOW())
+                INSERT INTO users (email, password_hash, created_at)
+                VALUES (%s, %s, NOW())
             """
-            cursor.execute(insert_query, (None, email, password_hash))  # Pass None for 'id'
+            cursor.execute(insert_query, (email, password_hash))
             connection.commit()
             return True
 
