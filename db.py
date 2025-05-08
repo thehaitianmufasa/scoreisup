@@ -15,12 +15,12 @@ def insert_dispute_submission(
             letter_date = datetime.strptime(letter_date, "%m/%d/%Y").strftime("%Y-%m-%d")
 
         connection = mysql.connector.connect(
-            host=st.secrets["MYSQL"]["MYSQL_HOST"],
-            port=int(st.secrets["MYSQL"]["MYSQL_PORT"]),
-            user=st.secrets["MYSQL"]["MYSQL_USER"],
-            password=st.secrets["MYSQL"]["MYSQL_PASSWORD"],
-            database=st.secrets["MYSQL"]["MYSQL_DATABASE"]
-        )
+    host=st.secrets["MYSQL_HOST"],
+    port=int(st.secrets["MYSQL_PORT"]),
+    user=st.secrets["MYSQL_USER"],
+    password=st.secrets["MYSQL_PASSWORD"],
+    database=st.secrets["MYSQL_DATABASE"]
+)
 
         if connection.is_connected():
             cursor = connection.cursor()
