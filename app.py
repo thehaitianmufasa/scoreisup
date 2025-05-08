@@ -45,20 +45,19 @@ if submit:
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Helvetica", size=12)
-        pdf.multi_cell(0, 10, f"{letter_date.strftime('%B %d, %Y')}\n")
-        pdf.multi_cell(0, 10, f"{name}\n{address}\nEmail: {email}\nDOB: {dob}\nSSN (Last 4): {ssn_last4}\n")
+        pdf.multi_cell(0, 10, f"{letter_date.strftime('%B %d, %Y')}")
+        pdf.multi_cell(0, 10, f"{name}\n{address}\nEmail: {email}\nDOB: {dob}\nSSN (Last 4): {ssn_last4}")
         pdf.ln(5)
-        pdf.multi_cell(0, 10, f"To Whom It May Concern at {bureau},\n")
-        pdf.multi_cell(0, 10, "I am writing to dispute the following item(s) on my credit report:\n")
+        pdf.multi_cell(0, 10, f"To Whom It May Concern at {bureau},")
+        pdf.multi_cell(0, 10, "I am writing to dispute the following item(s) on my credit report:")
         for reason in dispute_reasons:
-            pdf.multi_cell(0, 10, f"• {reason}")
+            pdf.multi_cell(0, 10, f"- {reason}")
         pdf.ln(5)
-        pdf.multi_cell(0, 10, "Please investigate and correct the inaccuracies within 30 days as required by law.\n\nSincerely,\n")
+        pdf.multi_cell(0, 10, "Please investigate and correct the inaccuracies within 30 days as required by law.\n\nSincerely,")
         pdf.multi_cell(0, 10, name)
 
         pdf_output = io.BytesIO()
-        pdf_output_bytes = bytes(pdf.output(dest="S"), encoding="latin1")
-        pdf_output.write(pdf_output_bytes)
+        pdf_output.write(pdf.output(dest="S").encode("latin-1"))
         pdf_output.seek(0)
 
         st.success("🎉 Dispute letter generated successfully!")
@@ -74,3 +73,4 @@ st.markdown("""
 ### 🔍 Get Your Free Weekly Credit Report  
 [Visit AnnualCreditReport.com](https://www.annualcreditreport.com)
 """)
+
