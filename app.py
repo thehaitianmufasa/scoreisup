@@ -3,26 +3,34 @@ from datetime import datetime
 import bcrypt
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
-# --- Session State Initialization ---
+# ----------------- INIT STATE -----------------
+if 'page' not in st.session_state:
+    st.session_state.page = "auth"
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
     st.session_state.user_email = ""
-if 'just_logged_in' not in st.session_state:
-    st.session_state.just_logged_in = False
 
-# ----------------- Safe Rerun Trigger -----------------
-st.title("Credit Dispute Letter Generator")
+# ----------------- LOGIN -----------------
+def login():
+    st.subheader("Login")
 
-# 🔐 Clean rerun — must be first thing after title
-if st.session_state.just_logged_in:
-    st.session_state.just_logged_in = False
-    st.experimental_rerun()
-    st.stop()  # ensure clean stop after rerun
+    email = st.text_input("Email", key="login_email")
+    password = st.text_input("Password", type="password", key="login_password")
 
-# ----------------- AUTHENTICATION -----------------
+    if st.button("Login"):
+        user = get_user_by_email(email)
+        if user and bcrypt.checkpw(password.encode(), user[2].encode()):
+            st.session_state.logged_in = True
+            st.session_state.user_email = email
+            st.session_state.page = "form"
+        else:
+            st.error("Invalid email or password.")
+
+# ----------------- SIGNUP -----------------
 def signup():
     st.subheader("Create Account")
+
     email = st.text_input("Email", key="signup_email")
     password = st.text_input("Password", type="password", key="signup_password")
 
@@ -36,23 +44,7 @@ def signup():
             else:
                 st.error("There was an error creating your account.")
 
-def login():
-    st.subheader("Login")
-
-    email = st.text_input("Email", key="login_email")
-    password = st.text_input("Password", type="password", key="login_password")
-
-    if st.button("Login"):
-        user = get_user_by_email(email)
-        if user and bcrypt.checkpw(password.encode(), user[2].encode()):
-            st.session_state.logged_in = True
-            st.session_state.user_email = email
-            st.session_state.just_logged_in = True
-            return  # skip rendering anything else
-        else:
-            st.error("Invalid email or password.")
-
-# ----------------- DISPUTE FORM -----------------
+# ----------------- FORM -----------------
 def dispute_form():
     st.subheader("Generate Dispute Letter")
 
@@ -90,7 +82,9 @@ def dispute_form():
         st.success("Dispute letters submitted successfully!")
 
 # ----------------- ROUTING -----------------
-if st.session_state.logged_in:
+st.title("Credit Dispute Letter Generator")
+
+if st.session_state.page == "form" and st.session_state.logged_in:
     st.success(f"Welcome, {st.session_state.user_email}!")
     dispute_form()
 else:
@@ -99,6 +93,3 @@ else:
         login()
     else:
         signup()
-
-
-
