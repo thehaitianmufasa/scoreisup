@@ -30,13 +30,14 @@ def login():
     email = st.text_input("Email", key="login_email")
     password = st.text_input("Password", type="password", key="login_password")
 
-    if st.button("Login"):
+    login_button = st.button("Login")
+
+    if login_button:
         user = get_user_by_email(email)
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = email
             st.success("Login successful!")
-            st.experimental_rerun()
         else:
             st.error("Invalid email or password.")
 
