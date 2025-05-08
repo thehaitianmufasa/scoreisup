@@ -30,19 +30,17 @@ def signup():
 def login():
     st.subheader("Login")
 
-    with st.form("login_form"):
-        email = st.text_input("Email", key="login_email")
-        password = st.text_input("Password", type="password", key="login_password")
-        login_btn = st.form_submit_button("Login")
+    email = st.text_input("Email", key="login_email")
+    password = st.text_input("Password", type="password", key="login_password")
 
-        if login_btn:
-            user = get_user_by_email(email)
-            if user and bcrypt.checkpw(password.encode(), user[2].encode()):
-                st.session_state.logged_in = True
-                st.session_state.user_email = email
-                st.session_state.page = "form"
-            else:
-                st.error("Invalid email or password.")
+    if st.button("Login"):
+        user = get_user_by_email(email)
+        if user and bcrypt.checkpw(password.encode(), user[2].encode()):
+            st.session_state.logged_in = True
+            st.session_state.user_email = email
+            st.session_state.page = "form"
+        else:
+            st.error("Invalid email or password.")
 
 # ----------------- DISPUTE FORM -----------------
 def dispute_form():
@@ -93,3 +91,4 @@ else:
         login()
     else:
         signup()
+
