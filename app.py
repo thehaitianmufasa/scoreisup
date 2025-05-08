@@ -8,6 +8,8 @@ if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
     st.session_state.user_email = ""
+if 'trigger_rerun' not in st.session_state:
+    st.session_state.trigger_rerun = False
 
 # ----------------- AUTHENTICATION -----------------
 def signup():
@@ -38,6 +40,7 @@ def login():
             if user and bcrypt.checkpw(password.encode(), user[2].encode()):
                 st.session_state.logged_in = True
                 st.session_state.user_email = email
+                st.session_state.trigger_rerun = True
                 st.success("Login successful!")
             else:
                 st.error("Invalid email or password.")
@@ -81,6 +84,11 @@ def dispute_form():
 
 # ----------------- MAIN APP -----------------
 st.title("Credit Dispute Letter Generator")
+
+# Trigger soft rerun after login to refresh state
+if st.session_state.trigger_rerun:
+    st.session_state.trigger_rerun = False
+    st.experimental_rerun()
 
 if st.session_state.get("logged_in"):
     st.success(f"Welcome, {st.session_state.user_email}!")
