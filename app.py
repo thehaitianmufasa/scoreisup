@@ -1,16 +1,11 @@
 import streamlit as st
+from datetime import datetime
+import bcrypt
 from fpdf import FPDF
 import tempfile
-import datetime
-import bcrypt
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
 st.set_page_config(page_title="📄 Credit Dispute Letter Generator", layout="centered")
-
-# --- Safe Rerun Block ---
-if 'force_refresh' in st.session_state and st.session_state.force_refresh:
-    st.session_state.force_refresh = False
-    st.experimental_rerun()
 
 # --- Session Setup ---
 if "logged_in" not in st.session_state:
@@ -41,8 +36,8 @@ def login():
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = email
-            st.session_state.force_refresh = True  # flag to trigger rerun safely
             st.success("✅ Login successful. Redirecting...")
+            st.session_state.force_refresh = True  # flag to trigger rerun safely
         else:
             st.error("Invalid login credentials.")
 
@@ -224,9 +219,6 @@ def dispute_form():
         with open(tmp_path, "rb") as f:
             st.download_button("📥 Download Your Dispute Letter", f, file_name="dispute_letter.pdf")
 
-        st.markdown("### 🔍 Get Your Free Weekly Credit Report")
-        st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
-
 # --- UI ROUTER ---
 st.title("📄 Credit Dispute Letter Generator")
 
@@ -247,3 +239,4 @@ else:
 # --- Footer ---
 st.markdown("### 🔍 Get Your Free Weekly Credit Report")
 st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
+
