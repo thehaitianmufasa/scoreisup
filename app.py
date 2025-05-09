@@ -8,7 +8,6 @@ from db import insert_dispute_submission, insert_user, get_user_by_email
 
 st.set_page_config(page_title="Credit Dispute Letter Generator", layout="centered")
 
-# ---------- SESSION STATE ----------
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
@@ -16,7 +15,6 @@ if 'user_email' not in st.session_state:
 if "num_accounts" not in st.session_state:
     st.session_state.num_accounts = 1
 
-# ---------- REASON LIBRARY ----------
 reason_texts = {
     "Account not mine (identity theft)": ("Fraudulent Account Reporting", "This account does not belong to me and appears to be the result of identity theft. Under the Fair Credit Reporting Act (FCRA) §605B and §609(a), I am formally requesting its immediate removal. Documentation is provided to support this claim."),
     "Paid account still showing unpaid": ("Inaccurate Unpaid Status", "This account has been fully paid, yet it continues to report as unpaid. As required by FCRA §623(a)(2), please update this record to reflect the accurate status."),
@@ -35,7 +33,6 @@ reason_texts = {
     "Charge-off account still updating monthly": ("Illegal Re-aging of Charged-Off Account", "This charged-off account continues to report monthly activity despite no recent payment. This is considered re-aging and violates FCRA §605 and §623(a)(2). Please cease further updates.")
 }
 
-# ---------- HELPERS ----------
 def add_account():
     if st.session_state.num_accounts < 5:
         st.session_state.num_accounts += 1
@@ -121,13 +118,12 @@ def dispute_form():
                 return
 
             try:
-                pdf = FPDF()
-                font_path = "DejaVuSans.ttf"
-
+                font_path = "ttf/DejaVuSans.ttf"  # ✅ Updated path
                 if not os_module.path.exists(font_path):
-                    st.error(f"Font file not found: {font_path}")
+                    st.error(f"❌ Font file not found: {font_path}")
                     return
 
+                pdf = FPDF()
                 pdf.add_font("DejaVu", "", font_path, uni=True)
                 pdf.add_font("DejaVu", "B", font_path, uni=True)
                 pdf.add_page()
@@ -173,7 +169,7 @@ def dispute_form():
             except Exception as e:
                 st.error(f"❌ Failed to generate letter: {e}")
 
-# ---------- MAIN ROUTER ----------
+# ---------- MAIN ----------
 st.title("Credit Dispute Letter Generator")
 
 if st.session_state.logged_in:
