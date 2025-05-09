@@ -7,6 +7,11 @@ from db import insert_dispute_submission, insert_user, get_user_by_email
 
 st.set_page_config(page_title="📄 Credit Dispute Letter Generator", layout="centered")
 
+# --- Safe Rerun Block ---
+if st.session_state.get("force_refresh"):
+    del st.session_state["force_refresh"]
+    st.experimental_rerun()
+
 # --- Session Setup ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -14,10 +19,6 @@ if "user_email" not in st.session_state:
     st.session_state.user_email = ""
 if "num_accounts" not in st.session_state:
     st.session_state.num_accounts = 1
-
-def add_account():
-    if st.session_state.num_accounts < 5:
-        st.session_state.num_accounts += 1
 
 def logout():
     st.session_state.logged_in = False
