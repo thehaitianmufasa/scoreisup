@@ -122,7 +122,7 @@ def dispute_form():
 
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_font("Arial", '', 12)
+            pdf.set_font("Times", '', 12)
             pdf.multi_cell(0, 10, bureau_options[bureau])
             pdf.ln(5)
             pdf.cell(0, 10, "To Whom It May Concern:", ln=True)
@@ -132,9 +132,9 @@ def dispute_form():
 
             for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data):
                 if acct_name and acct_number and reasons:
-                    pdf.set_font("Arial", 'B', 12)
+                    pdf.set_font("Times", 'B', 12)
                     pdf.cell(0, 10, f"Account {idx + 1} – Ending in {acct_number}", ln=True)
-                    pdf.set_font("Arial", '', 12)
+                    pdf.set_font("Times", '', 12)
                     for reason in reasons:
                         header, body = reason_texts[reason]
                         pdf.multi_cell(0, 10, f"{header}: {body}")
