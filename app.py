@@ -186,4 +186,3 @@ if submitted:
 # --- Footer ---
 st.markdown("### 🔍 Get Your Free Weekly Credit Report")
 st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
-
