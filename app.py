@@ -1,17 +1,17 @@
 import streamlit as st
-import os as os_module  # ✅ Protect against name collisions
+import os as os_module  # SAFE alias for os
 
-st.title("🔍 OS Debugger (Safe Version)")
+st.title("✅ OS Sanity Check (Aliased)")
 
-# Test the os module safely
-st.write("✅ type of os_module:", type(os_module))
-st.write("✅ hasattr(os_module, 'path'):", hasattr(os_module, "path"))
-st.write("✅ repr of os_module:", repr(os_module))
-
-# Check if font file exists
 font_path = "DejaVuSans.ttf"
+
+st.write("Checking font path:", font_path)
+
+# Confirm we're using the correct os
+st.write("os_module is a module:", hasattr(os_module, "path"))
+
 try:
     exists = os_module.path.exists(font_path)
-    st.success(f"✅ os_module.path.exists('{font_path}') = {exists}")
+    st.success(f"Font file exists: {exists}")
 except Exception as e:
-    st.error(f"❌ os_module.path.exists threw error: {e}")
+    st.error(f"ERROR using os_module.path.exists(): {e}")
