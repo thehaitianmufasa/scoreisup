@@ -10,8 +10,6 @@ if 'user_email' not in st.session_state:
     st.session_state.user_email = ""
 if 'auth_tab' not in st.session_state:
     st.session_state.auth_tab = "Login"
-if 'trigger_refresh' not in st.session_state:
-    st.session_state.trigger_refresh = False
 
 # ---------- LOGIN ----------
 def login():
@@ -20,17 +18,12 @@ def login():
     email = st.text_input("Email", key="login_email")
     password = st.text_input("Password", type="password", key="login_password")
 
-    login_clicked = st.button("Login")
-
-    if login_clicked:
+    if st.button("Login"):
         user = get_user_by_email(email)
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = user[1]
             st.success("✅ Login successful. Redirecting...")
-
-            # 🧠 Trigger dummy key change to rerender
-            st.session_state.trigger_refresh = not st.session_state.trigger_refresh
         else:
             st.error("Invalid email or password.")
 
@@ -88,9 +81,10 @@ def dispute_form():
             )
         st.success("Dispute letters submitted successfully!")
 
-# ---------- MAIN UI ROUTER ----------
+# ---------- MAIN ROUTER ----------
 st.title("Credit Dispute Letter Generator")
 
+# ✅ After login sets state, rerun to render the form
 if st.session_state.logged_in:
     st.success(f"Welcome, {st.session_state.user_email}!")
     dispute_form()
@@ -99,6 +93,7 @@ else:
 
     if tab == "Login":
         login()
+        if st.session_state.logged_in:
+            st.rerun()  # rerun after setting state to trigger redirect
     else:
         signup()
-
