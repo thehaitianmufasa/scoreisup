@@ -83,7 +83,7 @@ def dispute_form():
     letter_date = st.date_input("Letter Date", value=date.today())
 
     bureau_options = {
-        "Equifax": "Equifax Security & Fraud Prevention\nP.O. Box 105788\nAtlanta, GA 30348-5788",
+        "Equifax": "Equifax Information Services LLC\nP.O. Box 740256\nAtlanta, GA 30374-0256",
         "Experian": "Experian Consumer Disputes\nP.O. Box 4500\nAllen, TX 75013",
         "TransUnion": "TransUnion Consumer Solutions\nP.O. Box 2000\nChester, PA 19016"
     }
@@ -104,7 +104,6 @@ def dispute_form():
     proof_upload = st.file_uploader("Upload Proof of Address", type=["jpg", "jpeg", "png", "pdf"])
     confirm_id_uploaded = st.checkbox("✅ I have included a copy of my ID (even if not uploaded here)", key="confirm_id")
 
-    # Always display the annual report link
     st.markdown("### 🔍 Get Your Free Weekly Credit Report")
     st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
 
@@ -123,8 +122,40 @@ def dispute_form():
 
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_auto_page
+            pdf.set_font("Arial", size=12)
+            pdf.multi_cell(0, 10, bureau_options[bureau])
+            pdf.ln(5)
+            pdf.cell(0, 10, "To Whom It May Concern:", ln=True)
+            pdf.ln(5)
+            pdf.multi_cell(0, 10, "I am writing to dispute inaccurate information being reported on my credit file regarding the following account(s):")
+            pdf.ln(5)
 
+            for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data):
+                if acct_name and acct_number and reasons:
+                    pdf.set_font("Arial", 'B', 12)
+                    pdf.cell(0, 10, f"Account {idx + 1} – Ending in {acct_number}", ln=True)
+                    pdf.set_font("Arial", '', 12)
+                    for reason in reasons:
+                        header, body = reason_texts[reason]
+                        pdf.multi_cell(0, 10, f"{header}: {body}")
+                    pdf.ln(3)
+
+            pdf.ln(5)
+            pdf.multi_cell(0, 10, "These discrepancies are damaging to my credit profile and misrepresent my financial history. I am formally requesting the immediate deletion or full correction of the above accounts. If not corrected within 30 days as required by law, I will escalate the matter with the CFPB, FTC, and legal counsel.")
+            pdf.ln(10)
+            pdf.cell(0, 10, "Sincerely,", ln=True)
+            pdf.ln(5)
+            pdf.cell(0, 10, name, ln=True)
+            pdf.cell(0, 10, address, ln=True)
+            pdf.cell(0, 10, f"SSN (Last 4): {ssn_last4}", ln=True)
+            pdf.cell(0, 10, f"DOB: {dob}", ln=True)
+            pdf.cell(0, 10, f"Date: {letter_date.strftime('%B %d, %Y')}", ln=True)
+
+            # Generate downloadable PDF
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                pdf.output(tmp.name)
+                st.success("✅ Letter generated successfully!")
+                st.download_button("📥 Download Dispute Letter", data=open(tmp.name, "rb").read(), file_name=f"Dispute_Letter_{name.replace(' ', '_')}_{bureau}.pdf", mime="application/pdf")
 
 # ---------- MAIN ROUTER ----------
 st.title("Credit Dispute Letter Generator")
@@ -141,4 +172,3 @@ else:
         login()
     else:
         signup()
-
