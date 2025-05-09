@@ -77,7 +77,7 @@ def dispute_form():
 
     name = st.text_input("Full Name")
     address = st.text_input("Mailing Address")
-    dob = st.text_input("Date of Birth (MM/DD/YYYY)")
+    dob = st.text_input("Date of Birth (MM/DD/YYYY)", help="Example: 05/08/1990")
     email = st.text_input("Email Address", value=st.session_state.user_email)
     ssn_last4 = st.text_input("Last 4 Digits of SSN")
     letter_date = st.date_input("Letter Date", value=date.today())
@@ -114,56 +114,16 @@ def dispute_form():
         elif not any(acct_name and acct_number and reasons for acct_name, acct_number, reasons in dispute_data):
             st.warning("⚠️ Please enter at least one valid account with dispute reasons.")
         else:
+            try:
+                dob_obj = datetime.strptime(dob, "%m/%d/%Y")
+                dob_formatted = dob_obj.strftime("%Y-%m-%d")
+            except ValueError:
+                st.error("❌ Date of Birth must be in MM/DD/YYYY format.")
+                return
+
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_auto_page_break(auto=True, margin=15)
-            pdf.set_font("Helvetica", size=12)
-
-            sections = [
-                f"{letter_date.strftime('%B %d, %Y')}",
-                bureau_options[bureau],
-                f"{name}\n{address}\n{email}\nDOB: {dob}\nSSN: {ssn_last4}",
-                "",
-                "Subject: Dispute of Inaccurate Accounts – Request for Investigation and Removal",
-                "",
-                "To Whom It May Concern:",
-                "",
-                "I am submitting this formal dispute regarding one or more inaccurate or unauthorized accounts that currently appear on my credit report. Please review the following information carefully and take the necessary steps to investigate and correct these entries as required by federal law."
-            ]
-
-            for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data, 1):
-                if acct_name and acct_number and reasons:
-                    sections.append(f"\n---\nAccount #{idx}: {acct_name}\nAccount Number: {acct_number}\n")
-                    for reason in reasons:
-                        sections.append(reason_texts[reason][1])
-
-            if confirm_id_uploaded:
-                sections.append("\nI have included a copy of my government-issued ID as part of this dispute.")
-            sections += [
-                "I have also included a proof of address document.",
-                "Please complete your investigation within the 30-day timeframe outlined by the Fair Credit Reporting Act and confirm the outcome in writing.",
-                f"\nThank you for your prompt attention to this matter.\n\nSincerely,\n{name}"
-            ]
-
-            for section in sections:
-                for line in section.strip().split("\n"):
-                    safe_line = line.encode("latin-1", "replace").decode("latin-1")
-                    pdf.multi_cell(0, 8, safe_line)
-                pdf.ln(2)
-
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                pdf.output(tmp.name)
-                tmp_path = tmp.name
-
-            insert_dispute_submission(
-                name, email, address, dob, ssn_last4,
-                bureau,
-                "Multiple reasons per account",
-                letter_date
-            )
-
-            with open(tmp_path, "rb") as f:
-                st.download_button("📥 Download Dispute Letter", f, file_name="dispute_letter.pdf")
+            pdf.set_auto_page
 
 
 # ---------- MAIN ROUTER ----------
