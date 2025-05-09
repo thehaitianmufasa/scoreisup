@@ -122,21 +122,17 @@ def dispute_form():
                 return
 
             try:
-                pdf = FPDF()
-                pdf.add_page()
-
                 font_path = "DejaVuSans.ttf"
                 if not os.path.exists(font_path):
                     st.error(f"❌ Font file not found: {font_path}")
                     return
 
-                try:
-                    pdf.add_font("DejaVu", "", font_path, uni=True)
-                    pdf.add_font("DejaVu", "B", font_path, uni=True)
-                    pdf.set_font("DejaVu", "", 12)
-                except Exception as font_error:
-                    st.error(f"❌ Font loading failed: {font_error}")
-                    return
+                pdf = FPDF()
+                pdf.add_font("DejaVu", "", font_path, uni=True)
+                pdf.add_font("DejaVu", "B", font_path, uni=True)
+                pdf.set_font("DejaVu", "", 12)
+
+                pdf.add_page()
 
                 pdf.multi_cell(0, 10, bureau_options[bureau])
                 pdf.ln(5)
