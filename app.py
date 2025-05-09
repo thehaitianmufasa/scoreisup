@@ -160,8 +160,6 @@ def dispute_form():
         with open(tmp_path, "rb") as f:
             st.download_button("📥 Download Dispute Letter", f, file_name="dispute_letter.pdf")
 
-        st.markdown("### 🔍 Get Your Free Weekly Credit Report")
-        st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
 
 # ---------- MAIN ROUTER ----------
 st.title("Credit Dispute Letter Generator")
