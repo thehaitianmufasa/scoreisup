@@ -1,6 +1,8 @@
 import streamlit as st
 from datetime import datetime
 import bcrypt
+from fpdf import FPDF
+import tempfile
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
 # ---------- SESSION STATE ----------
@@ -48,6 +50,7 @@ def signup():
 def dispute_form():
     st.subheader("Generate Dispute Letter")
 
+    # Your personal information
     name = st.text_input("Full Name")
     email = st.text_input("Email", value=st.session_state.user_email)
     address = st.text_area("Mailing Address")
@@ -67,6 +70,12 @@ def dispute_form():
             if account_name and account_number and reason:
                 dispute_data.append((account_name, account_number, reason))
 
+    # File upload for supporting documents
+    st.markdown("## 📥 Upload Supporting Documents")
+    id_upload = st.file_uploader("Upload a Photo ID (Driver's License, Passport)", type=["jpg", "jpeg", "png", "pdf"])
+    proof_upload = st.file_uploader("Upload Proof of Address (Utility Bill, Lease, etc.)", type=["jpg", "jpeg", "png", "pdf"])
+
+    # Submit the form
     if st.button("Generate & Submit"):
         for account in dispute_data:
             insert_dispute_submission(
@@ -93,6 +102,7 @@ else:
     if tab == "Login":
         login()
         if st.session_state.logged_in:
-            st.rerun()  # Trigger screen change
+            st.experimental_rerun()  # Trigger screen change after login
     else:
         signup()
+
