@@ -2,6 +2,7 @@ import streamlit as st
 from datetime import datetime, date
 import bcrypt
 import tempfile
+import os
 from fpdf import FPDF
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
@@ -124,11 +125,19 @@ def dispute_form():
                 pdf = FPDF()
                 pdf.add_page()
 
-                # Load TTF font (must be in same directory as app.py)
-                pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
-                pdf.add_font("DejaVu", "B", "DejaVuSans.ttf", uni=True)
+                font_path = "DejaVuSans.ttf"
+                if not os.path.exists(font_path):
+                    st.error(f"❌ Font file not found: {font_path}")
+                    return
 
-                pdf.set_font("DejaVu", "", 12)
+                try:
+                    pdf.add_font("DejaVu", "", font_path, uni=True)
+                    pdf.add_font("DejaVu", "B", font_path, uni=True)
+                    pdf.set_font("DejaVu", "", 12)
+                except Exception as font_error:
+                    st.error(f"❌ Font loading failed: {font_error}")
+                    return
+
                 pdf.multi_cell(0, 10, bureau_options[bureau])
                 pdf.ln(5)
                 pdf.cell(0, 10, "To Whom It May Concern:", ln=True)
