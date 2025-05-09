@@ -3,21 +3,13 @@ from datetime import datetime
 import bcrypt
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
-# ---------- SESSION STATE ----------
+# ---------- INIT SESSION STATE ----------
+if 'page' not in st.session_state:
+    st.session_state.page = "auth"  # options: auth, form
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
     st.session_state.user_email = ""
-if 'auth_tab' not in st.session_state:
-    st.session_state.auth_tab = "Login"
-if 'just_logged_in' not in st.session_state:
-    st.session_state.just_logged_in = False
-
-# ---------- SUCCESS REDIRECT HANDLER ----------
-if st.session_state.just_logged_in:
-    st.success("✅ Login successful. Redirecting...")
-    st.session_state.just_logged_in = False
-    st.rerun()
 
 # ---------- LOGIN ----------
 def login():
@@ -31,7 +23,8 @@ def login():
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = user[1]
-            st.session_state.just_logged_in = True
+            st.success("✅ Login successful. Redirecting...")
+            st.session_state.page = "form"
         else:
             st.error("Invalid email or password.")
 
@@ -49,6 +42,7 @@ def signup():
             success = insert_user(email, password)
             if success:
                 st.success("Account created. Please log in.")
+                st.session_state.page = "auth"
             else:
                 st.error("There was an error creating your account.")
 
@@ -89,17 +83,21 @@ def dispute_form():
             )
         st.success("Dispute letters submitted successfully!")
 
-# ---------- MAIN UI ROUTER ----------
+# ---------- ROUTER ----------
 st.title("Credit Dispute Letter Generator")
 
-if st.session_state.logged_in:
+if st.session_state.page == "form" and st.session_state.logged_in:
     st.success(f"Welcome, {st.session_state.user_email}!")
     dispute_form()
-else:
-    tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab_radio")
 
+elif st.session_state.page == "auth":
+    tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab_radio")
     if tab == "Login":
         login()
     else:
         signup()
+
+else:
+    st.warning("Something went wrong. Resetting...")
+    st.session_state.page = "auth"
 
