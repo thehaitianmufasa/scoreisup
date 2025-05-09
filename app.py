@@ -3,20 +3,22 @@ from datetime import datetime
 import bcrypt
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
-# ---------- SESSION STATE INIT ----------
+# ---------- SESSION STATE ----------
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
     st.session_state.user_email = ""
 if 'auth_tab' not in st.session_state:
     st.session_state.auth_tab = "Login"
+if 'trigger_refresh' not in st.session_state:
+    st.session_state.trigger_refresh = False
 
 # ---------- LOGIN ----------
 def login():
     st.subheader("Login")
 
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
+    email = st.text_input("Email", key="login_email")
+    password = st.text_input("Password", type="password", key="login_password")
 
     login_clicked = st.button("Login")
 
@@ -25,7 +27,10 @@ def login():
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = user[1]
-            st.session_state.auth_tab = "Form"
+            st.success("✅ Login successful. Redirecting...")
+
+            # 🧠 Trigger dummy key change to rerender
+            st.session_state.trigger_refresh = not st.session_state.trigger_refresh
         else:
             st.error("Invalid email or password.")
 
@@ -89,10 +94,11 @@ st.title("Credit Dispute Letter Generator")
 if st.session_state.logged_in:
     st.success(f"Welcome, {st.session_state.user_email}!")
     dispute_form()
-elif st.session_state.auth_tab == "Login":
-    login()
-elif st.session_state.auth_tab == "Sign Up":
-    signup()
 else:
-    st.session_state.auth_tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab_radio")
+    tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab_radio")
+
+    if tab == "Login":
+        login()
+    else:
+        signup()
 
