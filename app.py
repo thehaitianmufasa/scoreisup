@@ -102,7 +102,11 @@ def dispute_form():
 
     id_upload = st.file_uploader("Upload a Photo ID", type=["jpg", "jpeg", "png", "pdf"])
     proof_upload = st.file_uploader("Upload Proof of Address", type=["jpg", "jpeg", "png", "pdf"])
-    confirm_id_uploaded = st.checkbox("✅ I have included a copy of my ID (even if not uploaded here)")
+    confirm_id_uploaded = st.checkbox("✅ I have included a copy of my ID (even if not uploaded here)", key="confirm_id")
+
+    # Always display the annual report link
+    st.markdown("### 🔍 Get Your Free Weekly Credit Report")
+    st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
 
     if st.button("📄 Generate & Download Letter"):
         pdf = FPDF()
