@@ -35,7 +35,6 @@ reason_texts = {
     "Charge-off account still updating monthly": ("Illegal Re-aging of Charged-Off Account", "This charged-off account continues to report monthly activity despite no recent payment. This is considered re-aging and violates FCRA §605 and §623(a)(2). Please cease further updates.")
 }
 
-# Utilities
 def add_account():
     if st.session_state.num_accounts < 5:
         st.session_state.num_accounts += 1
@@ -46,7 +45,6 @@ def logout():
     st.session_state.num_accounts = 1
     st.success("Logged out successfully.")
 
-# Login page
 def login():
     st.subheader("Login")
     email = st.text_input("Email", key="login_email")
@@ -60,18 +58,15 @@ def login():
         else:
             st.error("Invalid login credentials.")
 
-# Signup page with "I am human" checkbox
 def signup():
     st.subheader("Sign Up")
     email = st.text_input("Email", key="signup_email")
     password = st.text_input("Password", type="password", key="signup_password")
     is_human = st.checkbox("✅ I am a human (required to create account)", key="signup_human")
-
     if st.button("Sign Up"):
         if not is_human:
             st.warning("⚠️ Please confirm you're human before signing up.")
             return
-
         if get_user_by_email(email):
             st.warning("Email already registered.")
         else:
@@ -81,7 +76,6 @@ def signup():
             else:
                 st.error("Sign up failed.")
 
-# Main dispute form
 def dispute_form():
     st.subheader("📄 Generate Dispute Letter")
 
@@ -130,7 +124,7 @@ def dispute_form():
                 return
 
             try:
-                font_path = "DejaVuSans.ttf"  # ✅ Fixed font path to match root directory
+                font_path = "DejaVuSans.ttf"
                 if not os_module.path.exists(font_path):
                     st.error(f"❌ Font file not found: {font_path}")
                     return
@@ -141,7 +135,11 @@ def dispute_form():
                 pdf.add_page()
                 pdf.set_font("DejaVu", "", 12)
 
-                pdf.multi_cell(0, 10, bureau_options[bureau])
+                # New layout
+                pdf.cell(0, 10, letter_date.strftime("%B %d, %Y"), ln=True)
+                pdf.ln(5)
+                for line in bureau_options[bureau].split("\n"):
+                    pdf.multi_cell(0, 10, line)
                 pdf.ln(5)
                 pdf.cell(0, 10, "To Whom It May Concern:", ln=True)
                 pdf.ln(5)
@@ -151,10 +149,11 @@ def dispute_form():
                 for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data):
                     if acct_name and acct_number and reasons:
                         pdf.set_font("DejaVu", "B", 12)
-                        pdf.cell(0, 10, f"Account {idx + 1} – Ending in {acct_number}", ln=True)
+                        acct_number_clean = acct_number.replace("–", "-").replace("—", "-")
+                        pdf.cell(0, 10, f"Account {idx + 1} - Ending in {acct_number_clean}", ln=True)
                         pdf.set_font("DejaVu", "", 12)
                         for reason in reasons:
-                            header, body = reason_texts[reason]
+                            header, body = reason_texts.get(reason, ("Dispute", "Dispute reason not found."))
                             pdf.multi_cell(0, 10, f"{header}: {body}")
                         pdf.ln(3)
 
@@ -167,7 +166,6 @@ def dispute_form():
                 pdf.cell(0, 10, address, ln=True)
                 pdf.cell(0, 10, f"SSN (Last 4): {ssn_last4}", ln=True)
                 pdf.cell(0, 10, f"DOB: {dob}", ln=True)
-                pdf.cell(0, 10, f"Date: {letter_date.strftime('%B %d, %Y')}", ln=True)
 
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                     pdf.output(tmp.name)
@@ -181,7 +179,7 @@ def dispute_form():
             except Exception as e:
                 st.error(f"❌ Failed to generate letter: {e}")
 
-# -------- MAIN ----------
+# -------- MAIN --------
 st.title("Credit Dispute Letter Generator")
 
 if st.session_state.logged_in:
