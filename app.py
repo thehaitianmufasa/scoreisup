@@ -15,7 +15,7 @@ if 'user_email' not in st.session_state:
 if "num_accounts" not in st.session_state:
     st.session_state.num_accounts = 1
 
-# ---------- REASON LIBRARY (REWRITTEN) ----------
+# ---------- REASON LIBRARY ----------
 reason_texts = {
     "Account not mine (identity theft)": ("Fraudulent Account Reporting", "This account does not belong to me and appears to be the result of identity theft. Under the Fair Credit Reporting Act (FCRA) §605B and §609(a), I am formally requesting its immediate removal. Documentation is provided to support this claim."),
     "Paid account still showing unpaid": ("Inaccurate Unpaid Status", "This account has been fully paid, yet it continues to report as unpaid. As required by FCRA §623(a)(2), please update this record to reflect the accurate status."),
@@ -122,7 +122,7 @@ def dispute_form():
 
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_font("Helvetica", size=12)
+            pdf.set_font("Arial", '', 12)
             pdf.multi_cell(0, 10, bureau_options[bureau])
             pdf.ln(5)
             pdf.cell(0, 10, "To Whom It May Concern:", ln=True)
@@ -132,9 +132,9 @@ def dispute_form():
 
             for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data):
                 if acct_name and acct_number and reasons:
-                    pdf.set_font("Helvetica", 'B', 12)
+                    pdf.set_font("Arial", 'B', 12)
                     pdf.cell(0, 10, f"Account {idx + 1} – Ending in {acct_number}", ln=True)
-                    pdf.set_font("Helvetica", '', 12)
+                    pdf.set_font("Arial", '', 12)
                     for reason in reasons:
                         header, body = reason_texts[reason]
                         pdf.multi_cell(0, 10, f"{header}: {body}")
