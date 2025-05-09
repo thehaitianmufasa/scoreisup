@@ -123,7 +123,12 @@ def dispute_form():
             try:
                 pdf = FPDF()
                 pdf.add_page()
-                pdf.set_font("Helvetica", '', 12)
+
+                # Load TTF font (must be in same directory as app.py)
+                pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
+                pdf.add_font("DejaVu", "B", "DejaVuSans.ttf", uni=True)
+
+                pdf.set_font("DejaVu", "", 12)
                 pdf.multi_cell(0, 10, bureau_options[bureau])
                 pdf.ln(5)
                 pdf.cell(0, 10, "To Whom It May Concern:", ln=True)
@@ -133,9 +138,9 @@ def dispute_form():
 
                 for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data):
                     if acct_name and acct_number and reasons:
-                        pdf.set_font("Helvetica", 'B', 12)
+                        pdf.set_font("DejaVu", "B", 12)
                         pdf.cell(0, 10, f"Account {idx + 1} – Ending in {acct_number}", ln=True)
-                        pdf.set_font("Helvetica", '', 12)
+                        pdf.set_font("DejaVu", "", 12)
                         for reason in reasons:
                             header, body = reason_texts[reason]
                             pdf.multi_cell(0, 10, f"{header}: {body}")
