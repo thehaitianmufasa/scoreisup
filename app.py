@@ -3,7 +3,7 @@ from datetime import datetime
 import bcrypt
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
-# ---------- STATE INIT ----------
+# ---------- SESSION STATE ----------
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
@@ -16,12 +16,13 @@ def login():
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
 
-    if st.button("Login"):
+    login_clicked = st.button("Login")
+
+    if login_clicked:
         user = get_user_by_email(email)
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = user[1]
-            st.experimental_rerun()
         else:
             st.error("Invalid email or password.")
 
@@ -79,7 +80,7 @@ def dispute_form():
             )
         st.success("Dispute letters submitted successfully!")
 
-# ---------- ROUTING ----------
+# ---------- MAIN UI ----------
 st.title("Credit Dispute Letter Generator")
 
 if st.session_state.logged_in:
@@ -91,4 +92,5 @@ else:
         login()
     else:
         signup()
+
 
