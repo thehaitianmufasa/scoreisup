@@ -20,6 +20,7 @@ if "user_email" not in st.session_state:
 if "num_accounts" not in st.session_state:
     st.session_state.num_accounts = 1
 
+# --- Functions ---
 def add_account():
     if st.session_state.num_accounts < 5:
         st.session_state.num_accounts += 1
