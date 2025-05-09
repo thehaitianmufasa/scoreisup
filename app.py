@@ -25,7 +25,12 @@ def login():
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = user[1]
-            st.success("✅ Login successful. Please wait...")
+            st.success("✅ Login successful. Redirecting...")
+
+            # 🚀 Trigger silent refresh to load form view
+            st.markdown("""
+                <meta http-equiv="refresh" content="1">
+            """, unsafe_allow_html=True)
         else:
             st.error("Invalid email or password.")
 
@@ -96,5 +101,3 @@ else:
         login()
     else:
         signup()
-
-
