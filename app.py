@@ -122,7 +122,7 @@ def dispute_form():
 
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_font("Arial", size=12)
+            pdf.set_font("Helvetica", size=12)
             pdf.multi_cell(0, 10, bureau_options[bureau])
             pdf.ln(5)
             pdf.cell(0, 10, "To Whom It May Concern:", ln=True)
@@ -132,9 +132,9 @@ def dispute_form():
 
             for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data):
                 if acct_name and acct_number and reasons:
-                    pdf.set_font("Arial", 'B', 12)
+                    pdf.set_font("Helvetica", 'B', 12)
                     pdf.cell(0, 10, f"Account {idx + 1} – Ending in {acct_number}", ln=True)
-                    pdf.set_font("Arial", '', 12)
+                    pdf.set_font("Helvetica", '', 12)
                     for reason in reasons:
                         header, body = reason_texts[reason]
                         pdf.multi_cell(0, 10, f"{header}: {body}")
@@ -151,7 +151,6 @@ def dispute_form():
             pdf.cell(0, 10, f"DOB: {dob}", ln=True)
             pdf.cell(0, 10, f"Date: {letter_date.strftime('%B %d, %Y')}", ln=True)
 
-            # Generate downloadable PDF
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                 pdf.output(tmp.name)
                 st.success("✅ Letter generated successfully!")
