@@ -5,6 +5,7 @@ import datetime
 import bcrypt
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
+# --- Streamlit Config ---
 st.set_page_config(page_title="Credit Dispute Letter Generator", layout="centered")
 
 # --- Session Setup ---
@@ -15,10 +16,7 @@ if "user_email" not in st.session_state:
 if "num_accounts" not in st.session_state:
     st.session_state.num_accounts = 1
 
-def add_account():
-    if st.session_state.num_accounts < 5:
-        st.session_state.num_accounts += 1
-
+# --- Auth Functions ---
 def logout():
     st.session_state.logged_in = False
     st.session_state.user_email = ""
@@ -54,23 +52,24 @@ def signup():
 
 # --- Reason Library ---
 reason_texts = {
-    "Account not mine (identity theft)": ("Urgent Request to Remove Fraudulent Account from Credit Report", "This account is the result of identity theft. Under FCRA §605B and §609(a), I request the immediate deletion. Proper ID and documentation are included."),
-    "Paid account still showing unpaid": ("Dispute Regarding Paid Account Still Reporting as Unpaid", "I am writing to dispute the inaccurate reporting of an account that I have fully paid. Under FCRA §623(a)(2), furnishers must correct inaccurate information. Documentation enclosed."),
-    "Never late but marked late": ("Request to Correct False Late Payment Reporting", "I have never submitted a late payment on this account. The record is inaccurate and violates FCRA §611. Please review and correct the false entry."),
-    "Balance is incorrect": ("Incorrect Balance Dispute on Reported Account", "The balance reported is incorrect and must be updated under FCRA §611."),
-    "Account was settled but shows as charged-off": ("Dispute Regarding Settled Account Incorrectly Marked as Charged-Off", "This account was legally settled but shows as charged-off. Please update it under FCRA §623(a)."),
-    "Re-aged account / illegally reset": ("Dispute of Re-aged Account in Violation of Federal Law", "The date of first delinquency has been illegally reset. Under FCRA §605(c), correct or remove this account."),
-    "Duplicate account on report": ("Dispute of Duplicate Account Entry on Credit Report", "This account appears more than once. Please remove the duplicate per FCRA §611."),
-    "Account included in bankruptcy": ("Dispute of Bankruptcy-Related Account Reporting", "This account was discharged in bankruptcy and must reflect that status under FCRA §1681c."),
-    "Fraudulent account": ("Urgent Dispute - Fraudulent Account Reporting", "I am disputing a fraudulent account I did not authorize. Please remove under FCRA §605B and §623(a)(6)."),
-    "I was not an authorized user": ("Dispute – Inaccurate Authorized User Status", "I was not added as an authorized user. Please remove under FCRA §611 and §623."),
-    "Incorrect payment history": ("Request for Correction of Inaccurate Payment History", "The payment history is incorrect. Please correct under FCRA §611."),
-    "Account already paid or settled": ("Dispute of Account Reported as Unpaid Despite Settlement", "This account was paid/settled but still shows open. Please update to $0 balance under FCRA §623(a)."),
-    "Wrong account status reported": ("Correction Request for Wrong Account Status", "The account status is wrong (e.g. 'charged-off'). Please investigate under FCRA §611."),
-    "Outdated account info (older than 7-10 years)": ("Request for Removal of Outdated Account Information", "This account is past legal reporting limits. Please remove it under FCRA §605(a)."),
-    "Charge-off account still updating monthly": ("Illegal Re-aging of Charged-Off Account", "This charged-off account continues updating monthly without payment. Please stop updates under FCRA §605 and §623(a)(2).")
+    "Account not mine (identity theft)": ("Urgent Request to Remove Fraudulent Account from Credit Report", "This account is the result of identity theft. Under FCRA \u00a7605B and \u00a7609(a), I request the immediate deletion. Proper ID and documentation are included."),
+    "Paid account still showing unpaid": ("Dispute Regarding Paid Account Still Reporting as Unpaid", "I am writing to dispute the inaccurate reporting of an account that I have fully paid. Under FCRA \u00a7623(a)(2), furnishers must correct inaccurate information. Documentation enclosed."),
+    "Never late but marked late": ("Request to Correct False Late Payment Reporting", "I have never submitted a late payment on this account. The record is inaccurate and violates FCRA \u00a7611. Please review and correct the false entry."),
+    "Balance is incorrect": ("Incorrect Balance Dispute on Reported Account", "The balance reported is incorrect and must be updated under FCRA \u00a7611."),
+    "Account was settled but shows as charged-off": ("Dispute Regarding Settled Account Incorrectly Marked as Charged-Off", "This account was legally settled but shows as charged-off. Please update it under FCRA \u00a7623(a)."),
+    "Re-aged account / illegally reset": ("Dispute of Re-aged Account in Violation of Federal Law", "The date of first delinquency has been illegally reset. Under FCRA \u00a7605(c), correct or remove this account."),
+    "Duplicate account on report": ("Dispute of Duplicate Account Entry on Credit Report", "This account appears more than once. Please remove the duplicate per FCRA \u00a7611."),
+    "Account included in bankruptcy": ("Dispute of Bankruptcy-Related Account Reporting", "This account was discharged in bankruptcy and must reflect that status under FCRA \u00a71681c."),
+    "Fraudulent account": ("Urgent Dispute - Fraudulent Account Reporting", "I am disputing a fraudulent account I did not authorize. Please remove under FCRA \u00a7605B and \u00a7623(a)(6)."),
+    "I was not an authorized user": ("Dispute \u2013 Inaccurate Authorized User Status", "I was not added as an authorized user. Please remove under FCRA \u00a7611 and \u00a7623."),
+    "Incorrect payment history": ("Request for Correction of Inaccurate Payment History", "The payment history is incorrect. Please correct under FCRA \u00a7611."),
+    "Account already paid or settled": ("Dispute of Account Reported as Unpaid Despite Settlement", "This account was paid/settled but still shows open. Please update to $0 balance under FCRA \u00a7623(a)."),
+    "Wrong account status reported": ("Correction Request for Wrong Account Status", "The account status is wrong (e.g. 'charged-off'). Please investigate under FCRA \u00a7611."),
+    "Outdated account info (older than 7-10 years)": ("Request for Removal of Outdated Account Information", "This account is past legal reporting limits. Please remove it under FCRA \u00a7605(a)."),
+    "Charge-off account still updating monthly": ("Illegal Re-aging of Charged-Off Account", "This charged-off account continues updating monthly without payment. Please stop updates under FCRA \u00a7605 and \u00a7623(a)(2).")
 }
 
+# --- Dispute Form ---
 def dispute_form():
     st.subheader("📄 Generate Dispute Letter")
 
@@ -99,8 +98,8 @@ def dispute_form():
             reasons = st.multiselect(f"Dispute Reason(s) for Account {i+1}", list(reason_texts.keys()), key=f"reasons_{i}")
             account_fields.append((acct_name, acct_number, reasons))
 
-    id_upload = st.file_uploader("Upload a Photo ID (Driver’s License, Passport)", type=["jpg", "jpeg", "png", "pdf"])
-    proof_upload = st.file_uploader("Upload Proof of Address (Utility Bill, Lease, etc.)", type=["jpg", "jpeg", "png", "pdf"])
+    st.file_uploader("Upload a Photo ID (Driver’s License, Passport)", type=["jpg", "jpeg", "png", "pdf"])
+    st.file_uploader("Upload Proof of Address (Utility Bill, Lease, etc.)", type=["jpg", "jpeg", "png", "pdf"])
 
     if st.button("📄 Generate & Download Letter"):
         pdf = FPDF()
@@ -152,9 +151,6 @@ def dispute_form():
         with open(tmp_path, "rb") as f:
             st.download_button("📥 Download Dispute Letter", f, file_name="dispute_letter.pdf")
 
-        st.markdown("### 🔍 Get Your Free Weekly Credit Report")
-        st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
-
 # --- App Router ---
 st.title("Credit Dispute Letter Generator")
 
@@ -170,5 +166,3 @@ else:
         login()
     else:
         signup()
-
-
