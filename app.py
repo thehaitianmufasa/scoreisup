@@ -1,11 +1,16 @@
 import streamlit as st
-from datetime import datetime
-import bcrypt
 from fpdf import FPDF
 import tempfile
+import datetime
+import bcrypt
 from db import insert_dispute_submission, insert_user, get_user_by_email
 
 st.set_page_config(page_title="📄 Credit Dispute Letter Generator", layout="centered")
+
+# --- Safe Rerun Block ---
+if st.session_state.get("force_refresh"):
+    del st.session_state["force_refresh"]
+    st.experimental_rerun()
 
 # --- Session Setup ---
 if "logged_in" not in st.session_state:
@@ -38,6 +43,8 @@ def login():
             st.session_state.user_email = email
             st.success("✅ Login successful. Redirecting...")
             st.session_state.force_refresh = True  # flag to trigger rerun safely
+            # Delay rerun for safe refresh
+            st.experimental_rerun()  
         else:
             st.error("Invalid login credentials.")
 
@@ -119,6 +126,7 @@ reason_texts = {
     )
 }
 
+# --- Dispute Form ---
 def dispute_form():
     st.markdown("## 🔒 Your Information")
     client_name = st.text_input("Full Name")
