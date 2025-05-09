@@ -34,33 +34,43 @@ def logout():
 
 def login():
     st.subheader("Login")
+
     email = st.text_input("Email", key="login_email")
     password = st.text_input("Password", type="password", key="login_password")
+
     if st.button("Login"):
         user = get_user_by_email(email)
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
+            # Update session state after successful login
             st.session_state.logged_in = True
             st.session_state.user_email = email
             st.success("✅ Login successful. Redirecting...")
-            st.session_state.force_refresh = True  # flag to trigger rerun safely
-            # Delay rerun for safe refresh
-            st.experimental_rerun()  
+            # Set a flag to trigger rerun later
+            st.session_state.force_refresh = True
         else:
             st.error("Invalid login credentials.")
+        
+        # Use rerun after state update
+        if st.session_state.get("force_refresh"):
+            del st.session_state["force_refresh"]
+            st.experimental_rerun()  # Trigger screen change safely
+
 
 def signup():
-    st.subheader("Sign Up")
-    email = st.text_input("Email", key="signup_email")
-    password = st.text_input("Password", type="password", key="signup_password")
-    if st.button("Sign Up"):
-        if get_user_by_email(email):
-            st.warning("Email already registered.")
-        else:
+            st.subheader("Create Account")
+
+            email = st.text_input("Email", key="signup_email")
+            password = st.text_input("Password", type="password", key="signup_password")
+
+            if st.button("Sign Up"):
+            if get_user_by_email(email):
+             st.warning("Email already exists.")
+            else:
             success = insert_user(email, password)
             if success:
-                st.success("Account created. Please log in.")
+            st.success("Account created. Please log in.")
             else:
-                st.error("Sign up failed.")
+            st.error("There was an error creating your account.")
 
 # --- Dispute Reason Templates ---
 reason_texts = {
