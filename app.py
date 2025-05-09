@@ -15,23 +15,23 @@ if 'user_email' not in st.session_state:
 if "num_accounts" not in st.session_state:
     st.session_state.num_accounts = 1
 
-# ---------- REASON LIBRARY ----------
+# ---------- REASON LIBRARY (REWRITTEN) ----------
 reason_texts = {
-    "Account not mine (identity theft)": ("Urgent Request to Remove Fraudulent Account from Credit Report", "This account is the result of identity theft. Under FCRA §605B and §609(a), I request the immediate deletion. Proper ID and documentation are included."),
-    "Paid account still showing unpaid": ("Dispute Regarding Paid Account Still Reporting as Unpaid", "I am writing to dispute the inaccurate reporting of an account that I have fully paid. Under FCRA §623(a)(2), furnishers must correct inaccurate information. Documentation enclosed."),
-    "Never late but marked late": ("Request to Correct False Late Payment Reporting", "I have never submitted a late payment on this account. The record is inaccurate and violates FCRA §611. Please review and correct the false entry."),
-    "Balance is incorrect": ("Incorrect Balance Dispute on Reported Account", "The balance reported is incorrect and must be updated under FCRA §611."),
-    "Account was settled but shows as charged-off": ("Dispute Regarding Settled Account Incorrectly Marked as Charged-Off", "This account was legally settled but shows as charged-off. Please update it under FCRA §623(a)."),
-    "Re-aged account / illegally reset": ("Dispute of Re-aged Account in Violation of Federal Law", "The date of first delinquency has been illegally reset. Under FCRA §605(c), correct or remove this account."),
-    "Duplicate account on report": ("Dispute of Duplicate Account Entry on Credit Report", "This account appears more than once. Please remove the duplicate per FCRA §611."),
-    "Account included in bankruptcy": ("Dispute of Bankruptcy-Related Account Reporting", "This account was discharged in bankruptcy and must reflect that status under FCRA §1681c."),
-    "Fraudulent account": ("Urgent Dispute - Fraudulent Account Reporting", "I am disputing a fraudulent account I did not authorize. Please remove under FCRA §605B and §623(a)(6)."),
-    "I was not an authorized user": ("Dispute – Inaccurate Authorized User Status", "I was not added as an authorized user. Please remove under FCRA §611 and §623."),
-    "Incorrect payment history": ("Request for Correction of Inaccurate Payment History", "The payment history is incorrect. Please correct under FCRA §611."),
-    "Account already paid or settled": ("Dispute of Account Reported as Unpaid Despite Settlement", "This account was paid/settled but still shows open. Please update to $0 balance under FCRA §623(a)."),
-    "Wrong account status reported": ("Correction Request for Wrong Account Status", "The account status is wrong (e.g. 'charged-off'). Please investigate under FCRA §611."),
-    "Outdated account info (older than 7-10 years)": ("Request for Removal of Outdated Account Information", "This account is past legal reporting limits. Please remove it under FCRA §605(a)."),
-    "Charge-off account still updating monthly": ("Illegal Re-aging of Charged-Off Account", "This charged-off account continues updating monthly without payment. Please stop updates under FCRA §605 and §623(a)(2).")
+    "Account not mine (identity theft)": ("Fraudulent Account Reporting", "This account does not belong to me and appears to be the result of identity theft. Under the Fair Credit Reporting Act (FCRA) §605B and §609(a), I am formally requesting its immediate removal. Documentation is provided to support this claim."),
+    "Paid account still showing unpaid": ("Inaccurate Unpaid Status", "This account has been fully paid, yet it continues to report as unpaid. As required by FCRA §623(a)(2), please update this record to reflect the accurate status."),
+    "Never late but marked late": ("False Late Payment Reporting", "This account inaccurately reflects late payments. I have never missed or submitted a late payment. Please correct this error in accordance with FCRA §611."),
+    "Balance is incorrect": ("Incorrect Balance Reporting", "The balance shown for this account is not accurate. I request a prompt review and correction under FCRA §611."),
+    "Account was settled but shows as charged-off": ("Improper Charge-Off Label", "This account was legally settled, yet it is still marked as charged-off. Please update the status to reflect the settlement under FCRA §623(a)."),
+    "Re-aged account / illegally reset": ("Illegal Account Re-aging", "This account appears to have been re-aged illegally, in violation of FCRA §605(c). Please correct the Date of First Delinquency (DOFD) and update the reporting accordingly."),
+    "Duplicate account on report": ("Duplicate Account Entry", "This account is listed more than once, which is a reporting error. Please remove the duplicate entry under FCRA §611."),
+    "Account included in bankruptcy": ("Bankruptcy Discharged Account", "This account was discharged through bankruptcy and should reflect that status. Please update the record in compliance with FCRA §1681c."),
+    "Fraudulent account": ("Unauthorized Account Dispute", "This is a fraudulent account that I did not authorize or open. Please remove it under FCRA §605B and §623(a)(6). Supporting documentation is attached."),
+    "I was not an authorized user": ("Authorized User Error", "I was never added as an authorized user on this account. Please remove the reporting in accordance with FCRA §611 and §623."),
+    "Incorrect payment history": ("Inaccurate Payment History", "The payment history for this account contains inaccuracies. Please correct the record to reflect the accurate payment history under FCRA §611."),
+    "Account already paid or settled": ("Improper Status of Settled Account", "This account has been either paid or legally settled, yet it remains listed as open. Please update it to reflect a $0 balance under FCRA §623(a)."),
+    "Wrong account status reported": ("Incorrect Account Status", "The account status reported is incorrect (e.g., showing as 'charged-off' or 'past due'). Please investigate and correct this under FCRA §611."),
+    "Outdated account info (older than 7-10 years)": ("Outdated Reporting Violation", "This account is beyond the legally allowed reporting period and must be removed under FCRA §605(a)."),
+    "Charge-off account still updating monthly": ("Illegal Re-aging of Charged-Off Account", "This charged-off account continues to report monthly activity despite no recent payment. This is considered re-aging and violates FCRA §605 and §623(a)(2). Please cease further updates.")
 }
 
 # ---------- HELPERS ----------
@@ -102,6 +102,7 @@ def dispute_form():
 
     id_upload = st.file_uploader("Upload a Photo ID", type=["jpg", "jpeg", "png", "pdf"])
     proof_upload = st.file_uploader("Upload Proof of Address", type=["jpg", "jpeg", "png", "pdf"])
+    confirm_id_uploaded = st.checkbox("✅ I have included a copy of my ID (even if not uploaded here)")
 
     if st.button("📄 Generate & Download Letter"):
         pdf = FPDF()
@@ -114,11 +115,11 @@ def dispute_form():
             bureau_options[bureau],
             f"{name}\n{address}\n{email}\nDOB: {dob}\nSSN: {ssn_last4}",
             "",
-            "Subject: Dispute of Multiple Inaccurate Accounts – Request for Immediate Correction",
+            "Subject: Dispute of Inaccurate Accounts – Request for Investigation and Removal",
             "",
-            "Dear Sir/Madam,",
+            "To Whom It May Concern:",
             "",
-            "I am writing to formally dispute the following accounts appearing on my credit report. Each contains inaccurate, outdated, or legally improper information."
+            "I am submitting this formal dispute regarding one or more inaccurate or unauthorized accounts that currently appear on my credit report. Please review the following information carefully and take the necessary steps to investigate and correct these entries as required by federal law."
         ]
 
         for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data, 1):
@@ -127,10 +128,12 @@ def dispute_form():
                 for reason in reasons:
                     sections.append(reason_texts[reason][1])
 
+        if confirm_id_uploaded:
+            sections.append("\nI have included a copy of my government-issued ID as part of this dispute.")
         sections += [
-            "\nI have attached a copy of my government-issued ID and proof of address.",
-            "Please complete your investigation and respond in writing within the 30-day window required by federal law.",
-            f"\nThank you for your time and attention.\n\nSincerely,\n{name}"
+            "I have also included a proof of address document.",
+            "Please complete your investigation within the 30-day timeframe outlined by the Fair Credit Reporting Act and confirm the outcome in writing.",
+            f"\nThank you for your prompt attention to this matter.\n\nSincerely,\n{name}"
         ]
 
         for section in sections:
@@ -171,5 +174,4 @@ else:
         login()
     else:
         signup()
-
 
