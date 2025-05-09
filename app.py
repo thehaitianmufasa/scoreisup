@@ -8,6 +8,8 @@ if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
     st.session_state.user_email = ""
+if 'auth_tab' not in st.session_state:
+    st.session_state.auth_tab = "Login"
 
 # ---------- LOGIN ----------
 def login():
@@ -16,9 +18,7 @@ def login():
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
 
-    login_clicked = st.button("Login")
-
-    if login_clicked:
+    if st.button("Login"):
         user = get_user_by_email(email)
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
@@ -87,8 +87,9 @@ if st.session_state.logged_in:
     st.success(f"Welcome, {st.session_state.user_email}!")
     dispute_form()
 else:
-    tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab")
-    if tab == "Login":
+    st.session_state.auth_tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab_radio")
+
+    if st.session_state.auth_tab == "Login":
         login()
     else:
         signup()
