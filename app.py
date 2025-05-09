@@ -10,6 +10,14 @@ if 'user_email' not in st.session_state:
     st.session_state.user_email = ""
 if 'auth_tab' not in st.session_state:
     st.session_state.auth_tab = "Login"
+if 'just_logged_in' not in st.session_state:
+    st.session_state.just_logged_in = False
+
+# ---------- SUCCESS REDIRECT HANDLER ----------
+if st.session_state.just_logged_in:
+    st.success("✅ Login successful. Redirecting...")
+    st.session_state.just_logged_in = False
+    st.rerun()
 
 # ---------- LOGIN ----------
 def login():
@@ -23,7 +31,7 @@ def login():
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = user[1]
-            st.success("✅ Login successful. Redirecting...")
+            st.session_state.just_logged_in = True
         else:
             st.error("Invalid email or password.")
 
@@ -81,10 +89,9 @@ def dispute_form():
             )
         st.success("Dispute letters submitted successfully!")
 
-# ---------- MAIN ROUTER ----------
+# ---------- MAIN UI ROUTER ----------
 st.title("Credit Dispute Letter Generator")
 
-# ✅ After login sets state, rerun to render the form
 if st.session_state.logged_in:
     st.success(f"Welcome, {st.session_state.user_email}!")
     dispute_form()
@@ -93,7 +100,6 @@ else:
 
     if tab == "Login":
         login()
-        if st.session_state.logged_in:
-            st.rerun()  # rerun after setting state to trigger redirect
     else:
         signup()
+
