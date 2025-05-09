@@ -109,56 +109,61 @@ def dispute_form():
     st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
 
     if st.button("📄 Generate & Download Letter"):
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.set_font("Helvetica", size=12)
+        if not name or not address or not dob or not ssn_last4 or not email:
+            st.warning("⚠️ Please complete all required fields before generating the letter.")
+        elif not any(acct_name and acct_number and reasons for acct_name, acct_number, reasons in dispute_data):
+            st.warning("⚠️ Please enter at least one valid account with dispute reasons.")
+        else:
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_auto_page_break(auto=True, margin=15)
+            pdf.set_font("Helvetica", size=12)
 
-        sections = [
-            f"{letter_date.strftime('%B %d, %Y')}",
-            bureau_options[bureau],
-            f"{name}\n{address}\n{email}\nDOB: {dob}\nSSN: {ssn_last4}",
-            "",
-            "Subject: Dispute of Inaccurate Accounts – Request for Investigation and Removal",
-            "",
-            "To Whom It May Concern:",
-            "",
-            "I am submitting this formal dispute regarding one or more inaccurate or unauthorized accounts that currently appear on my credit report. Please review the following information carefully and take the necessary steps to investigate and correct these entries as required by federal law."
-        ]
+            sections = [
+                f"{letter_date.strftime('%B %d, %Y')}",
+                bureau_options[bureau],
+                f"{name}\n{address}\n{email}\nDOB: {dob}\nSSN: {ssn_last4}",
+                "",
+                "Subject: Dispute of Inaccurate Accounts – Request for Investigation and Removal",
+                "",
+                "To Whom It May Concern:",
+                "",
+                "I am submitting this formal dispute regarding one or more inaccurate or unauthorized accounts that currently appear on my credit report. Please review the following information carefully and take the necessary steps to investigate and correct these entries as required by federal law."
+            ]
 
-        for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data, 1):
-            if acct_name and acct_number and reasons:
-                sections.append(f"\n---\nAccount #{idx}: {acct_name}\nAccount Number: {acct_number}\n")
-                for reason in reasons:
-                    sections.append(reason_texts[reason][1])
+            for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data, 1):
+                if acct_name and acct_number and reasons:
+                    sections.append(f"\n---\nAccount #{idx}: {acct_name}\nAccount Number: {acct_number}\n")
+                    for reason in reasons:
+                        sections.append(reason_texts[reason][1])
 
-        if confirm_id_uploaded:
-            sections.append("\nI have included a copy of my government-issued ID as part of this dispute.")
-        sections += [
-            "I have also included a proof of address document.",
-            "Please complete your investigation within the 30-day timeframe outlined by the Fair Credit Reporting Act and confirm the outcome in writing.",
-            f"\nThank you for your prompt attention to this matter.\n\nSincerely,\n{name}"
-        ]
+            if confirm_id_uploaded:
+                sections.append("\nI have included a copy of my government-issued ID as part of this dispute.")
+            sections += [
+                "I have also included a proof of address document.",
+                "Please complete your investigation within the 30-day timeframe outlined by the Fair Credit Reporting Act and confirm the outcome in writing.",
+                f"\nThank you for your prompt attention to this matter.\n\nSincerely,\n{name}"
+            ]
 
-        for section in sections:
-            for line in section.strip().split("\n"):
-                safe_line = line.encode("latin-1", "replace").decode("latin-1")
-                pdf.multi_cell(0, 8, safe_line)
-            pdf.ln(2)
+            for section in sections:
+                for line in section.strip().split("\n"):
+                    safe_line = line.encode("latin-1", "replace").decode("latin-1")
+                    pdf.multi_cell(0, 8, safe_line)
+                pdf.ln(2)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-            pdf.output(tmp.name)
-            tmp_path = tmp.name
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                pdf.output(tmp.name)
+                tmp_path = tmp.name
 
-        insert_dispute_submission(
-            name, email, address, dob, ssn_last4,
-            bureau,
-            "Multiple reasons per account",
-            letter_date
-        )
+            insert_dispute_submission(
+                name, email, address, dob, ssn_last4,
+                bureau,
+                "Multiple reasons per account",
+                letter_date
+            )
 
-        with open(tmp_path, "rb") as f:
-            st.download_button("📥 Download Dispute Letter", f, file_name="dispute_letter.pdf")
+            with open(tmp_path, "rb") as f:
+                st.download_button("📥 Download Dispute Letter", f, file_name="dispute_letter.pdf")
 
 
 # ---------- MAIN ROUTER ----------
