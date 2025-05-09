@@ -8,36 +8,27 @@ if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
 if 'user_email' not in st.session_state:
     st.session_state.user_email = ""
-if 'login_button_clicked' not in st.session_state:
-    st.session_state.login_button_clicked = False
 
 # ---------- LOGIN ----------
 def login():
     st.subheader("Login")
 
-    email = st.text_input("Email", key="login_email")
-    password = st.text_input("Password", type="password", key="login_password")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        st.session_state.login_button_clicked = True
-        st.session_state.login_email = email
-        st.session_state.login_password = password
-
-    # Now check login status after click
-    if st.session_state.login_button_clicked:
-        user = get_user_by_email(st.session_state.login_email)
-        if user and bcrypt.checkpw(st.session_state.login_password.encode(), user[2].encode()):
+        user = get_user_by_email(email)
+        if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = user[1]
-            st.session_state.login_button_clicked = False
             st.experimental_rerun()
         else:
             st.error("Invalid email or password.")
-            st.session_state.login_button_clicked = False
 
 # ---------- SIGNUP ----------
 def signup():
     st.subheader("Create Account")
+
     email = st.text_input("Email", key="signup_email")
     password = st.text_input("Password", type="password", key="signup_password")
 
@@ -51,7 +42,7 @@ def signup():
             else:
                 st.error("There was an error creating your account.")
 
-# ---------- FORM ----------
+# ---------- DISPUTE FORM ----------
 def dispute_form():
     st.subheader("Generate Dispute Letter")
 
