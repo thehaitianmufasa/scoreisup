@@ -130,7 +130,7 @@ def dispute_form():
                 return
 
             try:
-                font_path = "ttf/DejaVuSans.ttf"  # Use your custom font here
+                font_path = "DejaVuSans.ttf"  # ✅ Fixed font path to match root directory
                 if not os_module.path.exists(font_path):
                     st.error(f"❌ Font file not found: {font_path}")
                     return
