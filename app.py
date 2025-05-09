@@ -86,15 +86,13 @@ st.title("Credit Dispute Letter Generator")
 
 if st.session_state.logged_in:
     st.success(f"Welcome, {st.session_state.user_email}!")
-    dispute_form()
+    dispute_form()  # Show dispute form after login
 else:
     tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab_radio")
 
     if tab == "Login":
         login()
         if st.session_state.logged_in:
-            st.rerun()  # Trigger screen change
+            st.experimental_rerun()  # Trigger page rerun after successful login
     else:
         signup()
-
-
