@@ -122,7 +122,7 @@ def dispute_form():
 
             pdf = FPDF()
             pdf.add_page()
-            pdf.set_font("Times", '', 12)
+            pdf.set_font("Times")
             pdf.multi_cell(0, 10, bureau_options[bureau])
             pdf.ln(5)
             pdf.cell(0, 10, "To Whom It May Concern:", ln=True)
@@ -132,9 +132,9 @@ def dispute_form():
 
             for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data):
                 if acct_name and acct_number and reasons:
-                    pdf.set_font("Times", 'B', 12)
+                    pdf.set_font("Times", 'B')
                     pdf.cell(0, 10, f"Account {idx + 1} – Ending in {acct_number}", ln=True)
-                    pdf.set_font("Times", '', 12)
+                    pdf.set_font("Times")
                     for reason in reasons:
                         header, body = reason_texts[reason]
                         pdf.multi_cell(0, 10, f"{header}: {body}")
@@ -143,7 +143,7 @@ def dispute_form():
             pdf.ln(5)
             pdf.multi_cell(0, 10, "These discrepancies are damaging to my credit profile and misrepresent my financial history. I am formally requesting the immediate deletion or full correction of the above accounts. If not corrected within 30 days as required by law, I will escalate the matter with the CFPB, FTC, and legal counsel.")
             pdf.ln(10)
-            pdf.cell(0, 10, "Sincerely,", ln=True)
+            pdf.cell(0, 10, "Sincerely:", ln=True)
             pdf.ln(5)
             pdf.cell(0, 10, name, ln=True)
             pdf.cell(0, 10, address, ln=True)
@@ -154,7 +154,12 @@ def dispute_form():
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
                 pdf.output(tmp.name)
                 st.success("✅ Letter generated successfully!")
-                st.download_button("📥 Download Dispute Letter", data=open(tmp.name, "rb").read(), file_name=f"Dispute_Letter_{name.replace(' ', '_')}_{bureau}.pdf", mime="application/pdf")
+                st.download_button(
+                    "📥 Download Dispute Letter",
+                    data=open(tmp.name, "rb").read(),
+                    file_name=f"Dispute_Letter_{name.replace(' ', '_')}_{bureau}.pdf",
+                    mime="application/pdf"
+                )
 
 # ---------- MAIN ROUTER ----------
 st.title("Credit Dispute Letter Generator")
@@ -171,3 +176,4 @@ else:
         login()
     else:
         signup()
+
