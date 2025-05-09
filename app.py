@@ -8,8 +8,8 @@ from db import insert_dispute_submission, insert_user, get_user_by_email
 st.set_page_config(page_title="📄 Credit Dispute Letter Generator", layout="centered")
 
 # --- Safe Rerun Block ---
-if st.session_state.get("force_refresh"):
-    del st.session_state["force_refresh"]
+if 'force_refresh' in st.session_state and st.session_state.force_refresh:
+    st.session_state.force_refresh = False
     st.experimental_rerun()
 
 # --- Session Setup ---
@@ -19,6 +19,10 @@ if "user_email" not in st.session_state:
     st.session_state.user_email = ""
 if "num_accounts" not in st.session_state:
     st.session_state.num_accounts = 1
+
+def add_account():
+    if st.session_state.num_accounts < 5:
+        st.session_state.num_accounts += 1
 
 def logout():
     st.session_state.logged_in = False
@@ -36,8 +40,8 @@ def login():
         if user and bcrypt.checkpw(password.encode(), user[2].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = email
+            st.session_state.force_refresh = True  # flag to trigger rerun safely
             st.success("✅ Login successful. Redirecting...")
-            st.session_state.force_refresh = True
         else:
             st.error("Invalid login credentials.")
 
@@ -54,6 +58,70 @@ def signup():
                 st.success("Account created. Please log in.")
             else:
                 st.error("Sign up failed.")
+
+# --- Dispute Reason Templates ---
+reason_texts = {
+    "Account not mine (identity theft)": (
+        "Re: Fraudulent Account Dispute – Identity Theft",
+        "I did not open or authorize the account listed. This is a clear case of identity theft. I have never had any dealings with this creditor and demand this be removed under FCRA §605B and §609(a). Supporting documentation and ID are provided."
+    ),
+    "Paid account still showing unpaid": (
+        "Re: Dispute of Paid Account Still Reporting as Unpaid",
+        "This account was paid in full, yet it continues to report as unpaid. This is inaccurate reporting and a violation of FCRA §623(a)(2). I’ve included payment proof — please update your records accordingly."
+    ),
+    "Never late but marked late": (
+        "Re: False Late Payment Reporting Dispute",
+        "This account is showing a late payment I never made. I have always paid on time. I request immediate correction under FCRA §611 to reflect the true payment history."
+    ),
+    "Balance is incorrect": (
+        "Re: Incorrect Balance Being Reported",
+        "The balance listed for this account is wrong. It does not reflect my actual payment or current status. Please investigate and correct this per FCRA §611."
+    ),
+    "Account was settled but shows as charged-off": (
+        "Re: Settled Account Reported as Charged-Off",
+        "This account was legally settled, yet it’s being reported as charged-off. This is misleading and inaccurate. Update the status to reflect 'settled' under FCRA §623(a)."
+    ),
+    "Re-aged account / illegally reset": (
+        "Re: Dispute of Re-Aged Account in Violation of FCRA",
+        "The date of first delinquency on this account has been reset, which is illegal re-aging. This violates FCRA §605(c). Please correct or remove the account immediately."
+    ),
+    "Duplicate account on report": (
+        "Re: Duplicate Account Reporting Dispute",
+        "This account appears multiple times on my credit report with the same details. It’s artificially inflating my debt. Please remove the duplicate per FCRA §611."
+    ),
+    "Account included in bankruptcy": (
+        "Re: Account Included in Bankruptcy Still Reporting",
+        "This account was discharged in bankruptcy and should reflect that status. As required under FCRA §1681c, update this account to show ‘included in bankruptcy’ with a $0 balance."
+    ),
+    "Fraudulent account": (
+        "Re: Immediate Removal of Fraudulent Account",
+        "I am disputing this account as fraudulent. I did not authorize or open it, and it does not belong to me. Under FCRA §605B and §623(a)(6), this tradeline must be removed."
+    ),
+    "I was not an authorized user": (
+        "Re: Unauthorized User Account Dispute",
+        "I was never added to this account as an authorized user. I had no permission, access, or benefit from it. Please remove this listing under FCRA §611 and §623."
+    ),
+    "Incorrect payment history": (
+        "Re: Dispute of Inaccurate Payment History",
+        "The payment history on this account is incorrect and misrepresents my financial behavior. I request a full investigation and correction in accordance with FCRA §611."
+    ),
+    "Account already paid or settled": (
+        "Re: Paid/Settled Account Still Reporting Open",
+        "This account has been paid or legally settled, yet it is still reported as open or delinquent. This must be updated to show $0 balance under FCRA §623(a)."
+    ),
+    "Wrong account status reported": (
+        "Re: Incorrect Account Status Needs Correction",
+        "The current status (e.g., 'charged-off', 'late') is incorrect. Please investigate and correct this reporting under FCRA §611."
+    ),
+    "Outdated account info (older than 7-10 years)": (
+        "Re: Removal Request for Outdated Negative Account",
+        "This account has surpassed the legal reporting limits — 7 years for most accounts, 10 years for bankruptcy. Please remove it as required by FCRA §605(a)."
+    ),
+    "Charge-off account still updating monthly": (
+        "Re: Improper Updating of Charged-Off Account",
+        "This account was charged off but is still being updated monthly, which is misleading and may violate re-aging restrictions. Please stop further updates and correct the status under FCRA §605 and §623(a)(2)."
+    )
+}
 
 def dispute_form():
     st.markdown("## 🔒 Your Information")
@@ -170,13 +238,11 @@ else:
     tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab_radio")
     if tab == "Login":
         login()
-        if st.session_state.get("force_refresh"):
-            del st.session_state["force_refresh"]
-            st.experimental_rerun()
+        if st.session_state.logged_in:
+            st.experimental_rerun()  # Trigger screen change safely
     else:
         signup()
 
 # --- Footer ---
 st.markdown("### 🔍 Get Your Free Weekly Credit Report")
 st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
-
