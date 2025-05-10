@@ -11,9 +11,9 @@ def login():
     if st.button("Login"):
         user = get_user_by_email(email)
 
-        if user and bcrypt.checkpw(password.encode(), user[2].encode()):
+        if user and "password" in user and bcrypt.checkpw(password.encode(), user["password"].encode()):
             st.session_state.logged_in = True
-            st.session_state.user_email = user[1]
+            st.session_state.user_email = user["email"]
             st.success("Login successful!")
             st.experimental_rerun()
         else:
