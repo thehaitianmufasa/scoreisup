@@ -1,196 +1,79 @@
 import streamlit as st
-from datetime import datetime, date
-import bcrypt
-import tempfile
-import os as os_module
-from fpdf import FPDF
-from db import insert_dispute_submission, insert_user, get_user_by_email
+import datetime
 
-st.set_page_config(page_title="Credit Dispute Letter Generator", layout="centered")
+# Set page config
+st.set_page_config(
+    page_title="Dashboard",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Session state setup
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-if 'user_email' not in st.session_state:
-    st.session_state.user_email = ""
-if "num_accounts" not in st.session_state:
-    st.session_state.num_accounts = 1
+# Color Palette
+primary = "#fdbb6d"
+accent = "#e86b75"
+success = "#5dc1ae"
+purple = "#915ab7"
+light_bg = "#f2f0f5"
+dark = "#252e3e"
 
-# Dispute reasons and legal language
-reason_texts = {
-    "Account not mine (identity theft)": ("Fraudulent Account Reporting", "This account does not belong to me and appears to be the result of identity theft. Under the Fair Credit Reporting Act (FCRA) §605B and §609(a), I am formally requesting its immediate removal. Documentation is provided to support this claim."),
-    "Paid account still showing unpaid": ("Inaccurate Unpaid Status", "This account has been fully paid, yet it continues to report as unpaid. As required by FCRA §623(a)(2), please update this record to reflect the accurate status."),
-    "Never late but marked late": ("False Late Payment Reporting", "This account inaccurately reflects late payments. I have never missed or submitted a late payment. Please correct this error in accordance with FCRA §611."),
-    "Balance is incorrect": ("Incorrect Balance Reporting", "The balance shown for this account is not accurate. I request a prompt review and correction under FCRA §611."),
-    "Account was settled but shows as charged-off": ("Improper Charge-Off Label", "This account was legally settled, yet it is still marked as charged-off. Please update the status to reflect the settlement under FCRA §623(a)."),
-    "Re-aged account / illegally reset": ("Illegal Account Re-aging", "This account appears to have been re-aged illegally, in violation of FCRA §605(c). Please correct the Date of First Delinquency (DOFD) and update the reporting accordingly."),
-    "Duplicate account on report": ("Duplicate Account Entry", "This account is listed more than once, which is a reporting error. Please remove the duplicate entry under FCRA §611."),
-    "Account included in bankruptcy": ("Bankruptcy Discharged Account", "This account was discharged through bankruptcy and should reflect that status. Please update the record in compliance with FCRA §1681c."),
-    "Fraudulent account": ("Unauthorized Account Dispute", "This is a fraudulent account that I did not authorize or open. Please remove it under FCRA §605B and §623(a)(6). Supporting documentation is attached."),
-    "I was not an authorized user": ("Authorized User Error", "I was never added as an authorized user on this account. Please remove the reporting in accordance with FCRA §611 and §623."),
-    "Incorrect payment history": ("Inaccurate Payment History", "The payment history for this account contains inaccuracies. Please correct the record to reflect the accurate payment history under FCRA §611."),
-    "Account already paid or settled": ("Improper Status of Settled Account", "This account has been either paid or legally settled, yet it remains listed as open. Please update it to reflect a $0 balance under FCRA §623(a)."),
-    "Wrong account status reported": ("Incorrect Account Status", "The account status reported is incorrect (e.g., showing as 'charged-off' or 'past due'). Please investigate and correct this under FCRA §611."),
-    "Outdated account info (older than 7-10 years)": ("Outdated Reporting Violation", "This account is beyond the legally allowed reporting period and must be removed under FCRA §605(a)."),
-    "Charge-off account still updating monthly": ("Illegal Re-aging of Charged-Off Account", "This charged-off account continues to report monthly activity despite no recent payment. This is considered re-aging and violates FCRA §605 and §623(a)(2). Please cease further updates.")
-}
+# Sidebar
+with st.sidebar:
+    st.markdown(f"""
+        <style>
+        .sidebar .sidebar-content {{
+            background-color: {dark};
+            color: white;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+    st.title("📊 Dashboard")
+    st.markdown("---")
+    st.subheader("Navigation")
+    st.button("Home")
+    st.button("Disputes")
+    st.button("Reports")
+    st.button("Settings")
 
-def add_account():
-    if st.session_state.num_accounts < 5:
-        st.session_state.num_accounts += 1
+# Header
+st.markdown(f"""
+    <h2 style='color:{dark}'>Welcome to Your Credit Dashboard</h2>
+    <hr style='border: 1px solid {primary};'/>
+""", unsafe_allow_html=True)
 
-def logout():
-    st.session_state.logged_in = False
-    st.session_state.user_email = ""
-    st.session_state.num_accounts = 1
-    st.success("Logged out successfully.")
+# Metric Cards
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Total Disputes", "45", "+5", delta_color="normal")
+col2.metric("Resolved", "32", "+2", delta_color="normal")
+col3.metric("Pending", "13", "0", delta_color="off")
+col4.metric("Success Rate", "71%", "+3%", delta_color="inverse")
 
-def login():
-    st.subheader("Login")
-    email = st.text_input("Email", key="login_email")
-    password = st.text_input("Password", type="password", key="login_password")
-    if st.button("Login"):
-        user = get_user_by_email(email)
-        if user and bcrypt.checkpw(password.encode(), user[2].encode()):
-            st.session_state.logged_in = True
-            st.session_state.user_email = email
-            st.rerun()
-        else:
-            st.error("Invalid login credentials.")
+# Charts Area
+st.markdown("### 📈 Dispute Summary")
+chart_col1, chart_col2 = st.columns([2, 1])
+with chart_col1:
+    st.line_chart({
+        "Resolved": [5, 7, 8, 12, 18, 21, 32],
+        "Pending": [20, 17, 14, 12, 11, 13, 13]
+    })
 
-def signup():
-    st.subheader("Sign Up")
-    email = st.text_input("Email", key="signup_email")
-    password = st.text_input("Password", type="password", key="signup_password")
-    is_human = st.checkbox("✅ I am a human (required to create account)", key="signup_human")
-    if st.button("Sign Up"):
-        if not is_human:
-            st.warning("⚠️ Please confirm you're human before signing up.")
-            return
-        if get_user_by_email(email):
-            st.warning("Email already registered.")
-        else:
-            success = insert_user(email, password)
-            if success:
-                st.success("Account created. Please log in.")
-            else:
-                st.error("Sign up failed.")
+with chart_col2:
+    st.bar_chart({
+        "Categories": ["ID Theft", "Late Payment", "Wrong Balance"],
+        "Cases": [18, 12, 15]
+    })
 
-def dispute_form():
-    st.subheader("📄 Generate Dispute Letter")
+# Recent Activity / Table
+st.markdown("### 📝 Recent Submissions")
+st.table({
+    "Date": ["2025-05-01", "2025-04-29", "2025-04-27"],
+    "Account": ["Capital One", "Discover", "Chase"],
+    "Status": ["Resolved", "Pending", "Resolved"]
+})
 
-    name = st.text_input("Full Name")
-    address = st.text_input("Mailing Address")
-    dob = st.text_input("Date of Birth (MM/DD/YYYY)", help="Example: 05/08/1990")
-    email = st.text_input("Email Address", value=st.session_state.user_email)
-    ssn_last4 = st.text_input("Last 4 Digits of SSN")
-    letter_date = st.date_input("Letter Date", value=date.today())
+# Footer / Note
+st.markdown(f"""
+    <div style='margin-top: 50px; padding: 10px; background-color: {light_bg}; border-left: 5px solid {primary};'>
+        <strong>Tip:</strong> Always upload clear documentation to improve success rate.
+    </div>
+""", unsafe_allow_html=True)
 
-    bureau_options = {
-        "Equifax": "Equifax Information Services LLC\nP.O. Box 740256\nAtlanta, GA 30374-0256",
-        "Experian": "Experian Consumer Disputes\nP.O. Box 4500\nAllen, TX 75013",
-        "TransUnion": "TransUnion Consumer Solutions\nP.O. Box 2000\nChester, PA 19016"
-    }
-    bureau = st.selectbox("Select Credit Bureau", list(bureau_options.keys()))
-
-    if st.button("➕ Add Another Account"):
-        add_account()
-
-    dispute_data = []
-    for i in range(st.session_state.num_accounts):
-        with st.expander(f"Account #{i+1}", expanded=(i == 0)):
-            account_name = st.text_input(f"Account Name {i+1}", key=f"acct_name_{i}")
-            account_number = st.text_input(f"Account Number {i+1}", key=f"acct_number_{i}")
-            reasons = st.multiselect(f"Dispute Reason(s) for Account {i+1}", list(reason_texts.keys()), key=f"reasons_{i}")
-            dispute_data.append((account_name, account_number, reasons))
-
-    id_upload = st.file_uploader("Upload a Photo ID", type=["jpg", "jpeg", "png", "pdf"])
-    proof_upload = st.file_uploader("Upload Proof of Address", type=["jpg", "jpeg", "png", "pdf"])
-    confirm_id_uploaded = st.checkbox("✅ I have included a copy of my ID (even if not uploaded here)", key="confirm_id")
-
-    st.markdown("### 🔍 Get Your Free Weekly Credit Report")
-    st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
-
-    if st.button("📄 Generate & Download Letter"):
-        if not name or not address or not dob or not ssn_last4 or not email:
-            st.warning("⚠️ Please complete all required fields before generating the letter.")
-        elif not any(acct_name and acct_number and reasons for acct_name, acct_number, reasons in dispute_data):
-            st.warning("⚠️ Please enter at least one valid account with dispute reasons.")
-        else:
-            try:
-                dob_obj = datetime.strptime(dob, "%m/%d/%Y")
-            except ValueError:
-                st.error("❌ Date of Birth must be in MM/DD/YYYY format.")
-                return
-
-            try:
-                font_path = "DejaVuSans.ttf"
-                if not os_module.path.exists(font_path):
-                    st.error(f"❌ Font file not found: {font_path}")
-                    return
-
-                pdf = FPDF()
-                pdf.add_font("DejaVu", "", font_path, uni=True)
-                pdf.add_font("DejaVu", "B", font_path, uni=True)
-                pdf.add_page()
-                pdf.set_font("DejaVu", "", 12)
-
-                # New layout
-                pdf.cell(0, 10, letter_date.strftime("%B %d, %Y"), ln=True)
-                pdf.ln(5)
-                for line in bureau_options[bureau].split("\n"):
-                    pdf.multi_cell(0, 10, line)
-                pdf.ln(5)
-                pdf.cell(0, 10, "To Whom It May Concern:", ln=True)
-                pdf.ln(5)
-                pdf.multi_cell(0, 10, "I am writing to dispute inaccurate information being reported on my credit file regarding the following account(s):")
-                pdf.ln(5)
-
-                for idx, (acct_name, acct_number, reasons) in enumerate(dispute_data):
-                    if acct_name and acct_number and reasons:
-                        pdf.set_font("DejaVu", "B", 12)
-                        acct_number_clean = acct_number.replace("–", "-").replace("—", "-")
-                        pdf.cell(0, 10, f"Account {idx + 1} - Ending in {acct_number_clean}", ln=True)
-                        pdf.set_font("DejaVu", "", 12)
-                        for reason in reasons:
-                            header, body = reason_texts.get(reason, ("Dispute", "Dispute reason not found."))
-                            pdf.multi_cell(0, 10, f"{header}: {body}")
-                        pdf.ln(3)
-
-                pdf.ln(5)
-                pdf.multi_cell(0, 10, "These discrepancies are damaging to my credit profile and misrepresent my financial history. I am formally requesting the immediate deletion or full correction of the above accounts. If not corrected within 30 days as required by law, I will escalate the matter with the CFPB, FTC, and legal counsel.")
-                pdf.ln(10)
-                pdf.cell(0, 10, "Sincerely:", ln=True)
-                pdf.ln(5)
-                pdf.cell(0, 10, name, ln=True)
-                pdf.cell(0, 10, address, ln=True)
-                pdf.cell(0, 10, f"SSN (Last 4): {ssn_last4}", ln=True)
-                pdf.cell(0, 10, f"DOB: {dob}", ln=True)
-
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
-                    pdf.output(tmp.name)
-                    st.success("✅ Letter generated successfully!")
-                    st.download_button(
-                        "📥 Download Dispute Letter",
-                        data=open(tmp.name, "rb").read(),
-                        file_name=f"Dispute_Letter_{name.replace(' ', '_')}_{bureau}.pdf",
-                        mime="application/pdf"
-                    )
-            except Exception as e:
-                st.error(f"❌ Failed to generate letter: {e}")
-
-# -------- MAIN --------
-st.title("Credit Dispute Letter Generator")
-
-if st.session_state.logged_in:
-    st.success(f"Welcome, {st.session_state.user_email}!")
-    if st.button("🔓 Logout"):
-        logout()
-        st.rerun()
-    dispute_form()
-else:
-    tab = st.radio("Select Option", ["Login", "Sign Up"], key="auth_tab_radio")
-    if tab == "Login":
-        login()
-    else:
-        signup()
