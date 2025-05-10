@@ -4,11 +4,7 @@ from mysql.connector import Error
 import streamlit as st
 import bcrypt
 
-# --- Dispute Submission ---
-def insert_dispute_submission(
-    name, email, address, dob, ssn_last4,
-    bureau, dispute_reasons, letter_date
-):
+def insert_dispute_submission(name, email, address, dob, ssn_last4, bureau, dispute_reasons, letter_date):
     connection = None
     try:
         if isinstance(dob, str):
@@ -21,8 +17,7 @@ def insert_dispute_submission(
             port=int(st.secrets["MYSQL_PORT"]),
             user=st.secrets["MYSQL_USER"],
             password=st.secrets["MYSQL_PASSWORD"],
-            database=st.secrets["MYSQL_DATABASE"],
-            charset='utf8mb4'
+            database=st.secrets["MYSQL_DATABASE"]
         )
 
         if connection.is_connected():
@@ -50,7 +45,7 @@ def insert_dispute_submission(
             cursor.close()
             connection.close()
 
-# --- Create New User ---
+
 def insert_user(email, password):
     try:
         connection = mysql.connector.connect(
@@ -82,7 +77,7 @@ def insert_user(email, password):
             cursor.close()
             connection.close()
 
-# --- Retrieve User by Email ---
+
 def get_user_by_email(email):
     try:
         connection = mysql.connector.connect(
@@ -103,6 +98,36 @@ def get_user_by_email(email):
     except Error as e:
         st.error(f"MySQL Error (Get User): {e}")
         return None
+
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+def update_user_password(email, new_password):
+    try:
+        connection = mysql.connector.connect(
+            host=st.secrets["MYSQL_HOST"],
+            port=int(st.secrets["MYSQL_PORT"]),
+            user=st.secrets["MYSQL_USER"],
+            password=st.secrets["MYSQL_PASSWORD"],
+            database=st.secrets["MYSQL_DATABASE"]
+        )
+
+        if connection.is_connected():
+            cursor = connection.cursor()
+            new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            cursor.execute(
+                "UPDATE users SET password_hash = %s WHERE email = %s",
+                (new_hash, email)
+            )
+            connection.commit()
+            return True
+
+    except Error as e:
+        st.error(f"MySQL Error (Update Password): {e}")
+        return False
 
     finally:
         if connection and connection.is_connected():
