@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_extras import stx
 from streamlit_extras.cookie_manager import CookieManager
 
 st.set_page_config(
