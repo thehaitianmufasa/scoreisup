@@ -2,6 +2,7 @@ import streamlit as st
 from dashboard import show_dashboard
 from dispute_letter import show_dispute_form
 from auth import login, signup
+from settings import settings_page
 
 # Session state
 if 'logged_in' not in st.session_state:
@@ -32,9 +33,10 @@ if st.session_state.logged_in:
     elif nav == "Dispute Letter":
         show_dispute_form()
     elif nav == "Settings":
-        st.markdown("## ⚙️ Settings page coming soon.")
+        settings_page()
 else:
     if nav == "Login":
         login()
     elif nav == "Sign Up":
         signup()
+
