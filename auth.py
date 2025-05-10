@@ -66,9 +66,6 @@ def login():
             st.error("Invalid email or password.")
             record_attempt(ip, 'login')
             return
-        if not user.get("verified"):
-            st.error("Your email is not verified. Please check your inbox and click the verification link.")
-            return
         stored_hash = user.get("password")
         if not stored_hash:
             st.error("Account error: No password hash found. Please contact support.")
