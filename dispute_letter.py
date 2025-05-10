@@ -3,8 +3,6 @@ from datetime import datetime, date
 from fpdf import FPDF
 import tempfile
 import os as os_module
-from db import insert_dispute_submission
-from ui_helpers import render_footer  # ✅ Add footer at the end
 
 reason_texts = {
     "Account not mine (identity theft)": ("Fraudulent Account Reporting", "This account does not belong to me and appears to be the result of identity theft. Under the Fair Credit Reporting Act (FCRA) §605B and §609(a), I am formally requesting its immediate removal. Documentation is provided to support this claim."),
@@ -36,7 +34,6 @@ def show_dispute_form():
     name = st.text_input("Full Name")
     address = st.text_input("Mailing Address")
     dob = st.text_input("Date of Birth (MM/DD/YYYY)", help="Example: 05/08/1990")
-    email = st.text_input("Email Address", value=st.session_state.user_email)
     ssn_last4 = st.text_input("Last 4 Digits of SSN")
     letter_date = st.date_input("Letter Date", value=date.today())
 
@@ -66,7 +63,7 @@ def show_dispute_form():
     st.link_button("Visit AnnualCreditReport.com", "https://www.annualcreditreport.com/index.action")
 
     if st.button("📄 Generate & Download Letter"):
-        if not name or not address or not dob or not ssn_last4 or not email:
+        if not name or not address or not dob or not ssn_last4:
             st.warning("⚠️ Please complete all required fields before generating the letter.")
         elif not any(acct_name and acct_number and reasons for acct_name, acct_number, reasons in dispute_data):
             st.warning("⚠️ Please enter at least one valid account with dispute reasons.")
@@ -132,5 +129,4 @@ def show_dispute_form():
             except Exception as e:
                 st.error(f"❌ Failed to generate letter: {e}")
 
-    # ✅ Show logo/footer
-    render_footer()
+    # Footer removed; handled by app.py

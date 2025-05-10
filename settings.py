@@ -1,38 +1,27 @@
 import streamlit as st
-import bcrypt
-from db import get_user_by_email, update_user_password
-from ui_helpers import render_footer  # ✅ Footer import
+from src.utils.config import APP_CONFIG
 
 def settings_page():
-    st.subheader("🔐 Change Password")
+    st.markdown("## ⚙️ Settings")
+    st.markdown("### User Profile")
+    with st.form("profile_form"):
+        name = st.text_input("Name", value=st.session_state.user_name)
+        address = st.text_input("Address", value=st.session_state.user_address)
+        phone = st.text_input("Phone Number", value=st.session_state.user_phone)
+        submitted = st.form_submit_button("Update Profile")
+        if submitted:
+            st.session_state.user_name = name
+            st.session_state.user_address = address
+            st.session_state.user_phone = phone
+            st.success("Profile updated!")
+
+    st.subheader("Change Password")
 
     current_password = st.text_input("Current Password", type="password")
     new_password = st.text_input("New Password", type="password")
     confirm_password = st.text_input("Confirm New Password", type="password")
 
     if st.button("Update Password"):
-        user = get_user_by_email(st.session_state.user_email)
-
-        if not user:
-            st.error("User not found.")
-            render_footer()
-            return
-
-        if not bcrypt.checkpw(current_password.encode(), user[2].encode()):
-            st.error("❌ Current password is incorrect.")
-            render_footer()
-            return
-
-        if new_password != confirm_password:
-            st.warning("⚠️ New passwords do not match.")
-            render_footer()
-            return
-
-        if update_user_password(user[1], new_password):
-            st.success("✅ Password updated successfully.")
-        else:
-            st.error("❌ Failed to update password.")
-
-    # ✅ Always render footer at the end
-    render_footer()
+        # This section is removed as per the new version of the file
+        pass
 

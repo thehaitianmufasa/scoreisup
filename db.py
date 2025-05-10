@@ -3,6 +3,7 @@ import mysql.connector
 from mysql.connector import Error
 import streamlit as st
 import bcrypt
+from typing import Optional, Dict, Any
 
 def insert_dispute_submission(name, email, address, dob, ssn_last4, bureau, dispute_reasons, letter_date):
     connection = None
@@ -78,30 +79,39 @@ def insert_user(email, password):
             connection.close()
 
 
-def get_user_by_email(email):
+def get_connection():
+    """Create and return a database connection"""
     try:
         connection = mysql.connector.connect(
-            host=st.secrets["MYSQL_HOST"],
-            port=int(st.secrets["MYSQL_PORT"]),
-            user=st.secrets["MYSQL_USER"],
-            password=st.secrets["MYSQL_PASSWORD"],
-            database=st.secrets["MYSQL_DATABASE"]
+            host=st.secrets["MYSQL"]["MYSQL_HOST"],
+            port=int(st.secrets["MYSQL"]["MYSQL_PORT"]),
+            user=st.secrets["MYSQL"]["MYSQL_USER"],
+            password=st.secrets["MYSQL"]["MYSQL_PASSWORD"],
+            database=st.secrets["MYSQL"]["MYSQL_DATABASE"]
         )
-
-        if connection.is_connected():
-            cursor = connection.cursor()
-            query = "SELECT id, email, password_hash FROM users WHERE email = %s"
-            cursor.execute(query, (email,))
-            result = cursor.fetchone()
-            return result
-
-    except Error as e:
-        st.error(f"MySQL Error (Get User): {e}")
+        return connection
+    except Exception as e:
+        st.error(f"Database connection error: {str(e)}")
         return None
 
+
+def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
+    """Get user by email from database"""
+    connection = None
+    try:
+        connection = get_connection()
+        if connection and connection.is_connected():
+            cursor = connection.cursor(dictionary=True)
+            query = "SELECT * FROM users WHERE email = %s"
+            cursor.execute(query, (email,))
+            user = cursor.fetchone()
+            cursor.close()
+            return user
+    except Exception as e:
+        st.error(f"Error fetching user: {str(e)}")
+        return None
     finally:
         if connection and connection.is_connected():
-            cursor.close()
             connection.close()
 
 
@@ -132,5 +142,67 @@ def update_user_password(email, new_password):
     finally:
         if connection and connection.is_connected():
             cursor.close()
+            connection.close()
+
+
+def create_user(email: str, password: str) -> bool:
+    """Create a new user in the database"""
+    connection = None
+    try:
+        connection = get_connection()
+        if connection and connection.is_connected():
+            cursor = connection.cursor()
+            query = "INSERT INTO users (email, password) VALUES (%s, %s)"
+            cursor.execute(query, (email, password))
+            connection.commit()
+            cursor.close()
+            return True
+    except Exception as e:
+        st.error(f"Error creating user: {str(e)}")
+        return False
+    finally:
+        if connection and connection.is_connected():
+            connection.close()
+
+
+def init_db():
+    """Initialize the database with required tables"""
+    connection = None
+    try:
+        connection = get_connection()
+        if connection and connection.is_connected():
+            cursor = connection.cursor()
+            
+            # Create users table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password VARCHAR(255) NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Create dispute_letters table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS dispute_letters (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    user_id INT NOT NULL,
+                    bureau VARCHAR(50) NOT NULL,
+                    reasons TEXT NOT NULL,
+                    status VARCHAR(20) DEFAULT 'pending',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                )
+            """)
+            
+            connection.commit()
+            cursor.close()
+            return True
+    except Exception as e:
+        st.error(f"Error initializing database: {str(e)}")
+        return False
+    finally:
+        if connection and connection.is_connected():
             connection.close()
 

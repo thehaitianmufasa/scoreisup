@@ -1,35 +1,42 @@
 import streamlit as st
-import bcrypt
-from db import get_user_by_email, insert_user
+
+# Dummy user for testing
+DUMMY_USER = {
+    "email": "test@example.com",
+    "password": "Test@123"  # This is a simple password for testing
+}
 
 def login():
-    st.subheader("Login")
-    email = st.text_input("Email", key="login_email")
-    password = st.text_input("Password", type="password", key="login_password")
+    st.markdown("## 🔐 Login")
+    
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    
     if st.button("Login"):
-        user = get_user_by_email(email)
-        if user and bcrypt.checkpw(password.encode(), user[2].encode()):
+        if email == DUMMY_USER["email"] and password == DUMMY_USER["password"]:
             st.session_state.logged_in = True
-            st.session_state.user_email = email
+            st.success("Login successful!")
             st.rerun()
         else:
             st.error("Invalid login credentials.")
 
 def signup():
-    st.subheader("Sign Up")
-    email = st.text_input("Email", key="signup_email")
-    password = st.text_input("Password", type="password", key="signup_password")
-    is_human = st.checkbox("✅ I am a human (required to create account)", key="signup_human")
+    st.markdown("## ✍️ Sign Up")
+    
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    confirm_password = st.text_input("Confirm Password", type="password")
+    
     if st.button("Sign Up"):
-        if not is_human:
-            st.warning("⚠️ Please confirm you're human before signing up.")
+        if password != confirm_password:
+            st.error("Passwords do not match!")
             return
-        if get_user_by_email(email):
-            st.warning("Email already registered.")
-        else:
-            success = insert_user(email, password)
-            if success:
-                st.success("Account created. Please log in.")
-            else:
-                st.error("Sign up failed.")
+            
+        if email == DUMMY_USER["email"]:
+            st.error("Email already exists!")
+            return
+            
+        # For testing, we'll just show a success message
+        st.success("Account created successfully! You can now login.")
+        st.info("For testing, use these credentials:\nEmail: test@example.com\nPassword: Test@123")
 
