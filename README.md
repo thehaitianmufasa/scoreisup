@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🧾 Dispute Letter Generator (Streamlit App)
 
 This Streamlit application allows users to generate legally structured dispute letters for credit bureaus based on a selection of predefined dispute reasons.
