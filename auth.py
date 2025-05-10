@@ -2,11 +2,22 @@ import streamlit as st
 import bcrypt
 from db import get_user_by_email, insert_user
 import time
+import smtplib
+from email.mime.text import MIMEText
+import uuid
+from streamlit_extras import stx
 
 # In-memory rate limiting store
 RATE_LIMIT = {}
 RATE_LIMIT_WINDOW = 300  # 5 minutes
 RATE_LIMIT_MAX_ATTEMPTS = 5
+
+MAILGUN_SMTP_HOST = "smtp.mailgun.org"
+MAILGUN_SMTP_PORT = 587
+MAILGUN_SMTP_USER = "postmaster@mg.scoreisup.com"
+MAILGUN_SMTP_PASS = "Paysoz991@#"
+
+cookie_manager = stx.CookieManager()
 
 def get_client_ip():
     # Try to get IP from Streamlit headers (works if behind a proxy)
@@ -58,6 +69,9 @@ def login():
             st.error("Invalid email or password.")
             record_attempt(ip, 'login')
             return
+        if not user.get("verified"):
+            st.error("Your email is not verified. Please check your inbox and click the verification link.")
+            return
         stored_hash = user.get("password")
         if not stored_hash:
             st.error("Account error: No password hash found. Please contact support.")
@@ -68,6 +82,8 @@ def login():
             if bcrypt.checkpw(password_bytes, stored_hash_bytes):
                 st.session_state.logged_in = True
                 st.session_state.user_email = user["email"]
+                # Set cookie for session persistence
+                cookie_manager.set("user_email", user["email"], max_age=86400)  # 1 day
                 st.success(f"Welcome back, {user['email']}!")
                 st.rerun()
             else:
@@ -77,6 +93,32 @@ def login():
             st.error(f"Authentication error: {str(e)}")
             st.error("Please try again or contact support if the problem persists.")
             record_attempt(ip, 'login')
+
+def send_verification_email(email, token):
+    verify_link = f"https://scoreisup.com/verify?email={email}&token={token}"
+    body = f"""
+Hi {email.split('@')[0].title()},
+
+🎉 Welcome to ScoreIsUp!
+
+Please verify your email by clicking the link below:
+{verify_link}
+
+If you didn't sign up, feel free to ignore this email.
+
+— The ScoreIsUp Team
+"""
+    msg = MIMEText(body)
+    msg["Subject"] = "Welcome to ScoreIsUp! Please verify your email"
+    msg["From"] = "ScoreIsUp <no-reply@scoreisup.com>"
+    msg["To"] = email
+    try:
+        with smtplib.SMTP(MAILGUN_SMTP_HOST, MAILGUN_SMTP_PORT) as server:
+            server.starttls()
+            server.login(MAILGUN_SMTP_USER, MAILGUN_SMTP_PASS)
+            server.sendmail(msg["From"], [email], msg.as_string())
+    except Exception as e:
+        st.error(f"Failed to send verification email: {e}")
 
 def signup():
     st.markdown("## ✍️ Sign Up")
@@ -109,9 +151,10 @@ def signup():
             record_attempt(ip, 'signup')
             return
         try:
-            if insert_user(email, password):
-                st.success("Account created successfully! You can now login.")
-                st.info("Login using the same form above.")
+            verification_token = str(uuid.uuid4())
+            if insert_user(email, password, verification_token):
+                send_verification_email(email, verification_token)
+                st.success("Account created! Please check your email to verify your account before logging in.")
             else:
                 st.error("Failed to create account. Please try again.")
                 record_attempt(ip, 'signup')
