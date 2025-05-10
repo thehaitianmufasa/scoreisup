@@ -5,7 +5,7 @@ import time
 import smtplib
 from email.mime.text import MIMEText
 import uuid
-from streamlit_extras import stx
+from streamlit_extras.cookie_manager import CookieManager
 
 # In-memory rate limiting store
 RATE_LIMIT = {}
@@ -17,7 +17,7 @@ MAILGUN_SMTP_PORT = 587
 MAILGUN_SMTP_USER = "postmaster@mg.scoreisup.com"
 MAILGUN_SMTP_PASS = "Paysoz991@#"
 
-cookie_manager = stx.CookieManager()
+cookie_manager = CookieManager()
 
 def get_client_ip():
     # Try to get IP from Streamlit headers (works if behind a proxy)

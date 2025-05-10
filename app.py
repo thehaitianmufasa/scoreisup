@@ -1,5 +1,6 @@
 import streamlit as st
 from streamlit_extras import stx
+from streamlit_extras.cookie_manager import CookieManager
 
 st.set_page_config(
     page_title="Credit Tools Portal",
@@ -29,7 +30,7 @@ if "user_phone" not in st.session_state:
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False  # Initialize logged_in as False
 
-cookie_manager = stx.CookieManager()
+cookie_manager = CookieManager()
 cookies = cookie_manager.get_all()
 if "user_email" in cookies:
     st.session_state["logged_in"] = True
