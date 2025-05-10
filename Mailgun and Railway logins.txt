@@ -1,0 +1,110 @@
+﻿# Railway
+
+YSQL_DATABASE
+railway
+MYSQL_PUBLIC_URL
+mysql://root:kAfGOGEepZaJkWdmTJpTSniVKBxUFNJy@shortline.proxy.rlwy.net:59017/railway
+MYSQL_ROOT_PASSWORD
+kAfGOGEepZaJkWdmTJpTSniVKBxUFNJy
+MYSQL_URL
+mysql://root:kAfGOGEepZaJkWdmTJpTSniVKBxUFNJy@mysql.railway.internal:3306/railway
+MYSQLDATABASE
+railway
+MYSQLHOST
+mysql.railway.internal
+MYSQLPASSWORD
+kAfGOGEepZaJkWdmTJpTSniVKBxUFNJy
+MYSQLPORT
+3306
+MYSQLUSER
+root
+
+
+
+
+
+
+
+
+Mail gun  DNS records listed below
+
+
+
+
+
+
+Sending records
+When automatic sender security is active, you'll be required to install CNAME records with your DNS provider. Otherwise, TXT records will be provided.
+Actions
+Status
+	Type
+	Host (name)
+	Value (points to)
+	
+
+	Unverified
+	TXT
+	pic._domainkey.support.scoreisup.com
+	k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCRvm3dz4wnsTZFX9pSnBYKwWV6F0wUKBtJxp2pIDoyWt5P6tXt9JddibZl5wXf2iBwGOffUZVNNb7YXG5+xOSKRY0yr/OlYAzv+1M0xeRCeW7TW2jhhSZ0/tDSePG2FHfkGjoV1eee/wKv/0RFThUDutHzWA6O4K1zoL2UhQx7wIDAQAB
+	
+
+	Unverified
+	TXT
+	support.scoreisup.com
+	v=spf1 include:mailgun.org ~all
+	
+
+	Receiving records
+Install the provided MX records to route incoming mail through Mailgun, unless your domain already uses another provider (like Gmail) for receiving email. Learn more about MX record setup.
+Status
+	Type
+	Host (name)
+	Value (points to)
+	Priority
+	
+
+	Unverified
+	MX
+	support.scoreisup.com
+	mxa.mailgun.org
+	10
+	
+
+	Unverified
+	MX
+	support.scoreisup.com
+	mxb.mailgun.org
+	10
+	
+
+	Tracking records
+The CNAME record is necessary for tracking opens, clicks, and unsubscribes.
+Status
+	Type
+	Host (name)
+	Value (points to)
+	
+
+	Unverified
+	CNAME
+	email.support.scoreisup.com
+	mailgun.org
+	
+
+	
+
+Login
+	Date created
+	
+
+	
+
+	jeff@support.scoreisup.com
+	05/10/25 09:42 AM
+	Reset Password
+	Delete
+	10
+20
+50
+SMTP settings
+smtp.mailgun.org
