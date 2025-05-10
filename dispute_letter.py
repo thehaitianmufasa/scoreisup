@@ -1,10 +1,10 @@
-
 import streamlit as st
 from datetime import datetime, date
 from fpdf import FPDF
 import tempfile
 import os as os_module
 from db import insert_dispute_submission
+from ui_helpers import render_footer  # ✅ Add footer at the end
 
 reason_texts = {
     "Account not mine (identity theft)": ("Fraudulent Account Reporting", "This account does not belong to me and appears to be the result of identity theft. Under the Fair Credit Reporting Act (FCRA) §605B and §609(a), I am formally requesting its immediate removal. Documentation is provided to support this claim."),
@@ -131,3 +131,6 @@ def show_dispute_form():
                     )
             except Exception as e:
                 st.error(f"❌ Failed to generate letter: {e}")
+
+    # ✅ Show logo/footer
+    render_footer()
