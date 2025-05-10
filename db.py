@@ -47,7 +47,7 @@ def insert_dispute_submission(name, email, address, dob, ssn_last4, bureau, disp
             connection.close()
 
 
-def insert_user(email, password, verification_token=None):
+def insert_user(email, password, verified=False):
     try:
         connection = mysql.connector.connect(
             host=st.secrets["MYSQL_HOST"],
@@ -64,10 +64,10 @@ def insert_user(email, password, verification_token=None):
             password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
             insert_query = """
-                INSERT INTO users (email, password, created_at, verified, verification_token)
-                VALUES (%s, %s, NOW(), %s, %s)
+                INSERT INTO users (email, password, created_at, verified)
+                VALUES (%s, %s, NOW(), %s)
             """
-            cursor.execute(insert_query, (email, password_hash, False, verification_token))
+            cursor.execute(insert_query, (email, password_hash, verified))
             connection.commit()
             return True
 

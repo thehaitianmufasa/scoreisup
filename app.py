@@ -1,5 +1,50 @@
 import streamlit as st
-from streamlit_extras import stx
+from db import get_user_by_email, get_connection
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# --- EMAIL VERIFICATION LOGIC ---
+params = st.query_params
+email = params.get("email", [None])[0]
+token = params.get("token", [None])[0]
+
+logger.info(f"Verification attempt - Email: {email}, Token: {token}")
+
+if email and token:
+    user = get_user_by_email(email)
+    if not user:
+        logger.error(f"User not found: {email}")
+        st.error("User not found.")
+    elif user.get("verified"):
+        logger.info(f"User already verified: {email}")
+        st.info("Your email is already verified.")
+    elif user.get("verification_token") != token:
+        logger.error(f"Invalid token for user {email}. Expected: {user.get('verification_token')}, Got: {token}")
+        st.error("Invalid or expired verification link.")
+    else:
+        try:
+            conn = get_connection()
+            if conn and conn.is_connected():
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE users SET verified = %s, verification_token = NULL WHERE email = %s",
+                    (True, email)
+                )
+                conn.commit()
+                cursor.close()
+                conn.close()
+                logger.info(f"Successfully verified user: {email}")
+                st.success("Your email has been verified! You can now log in.")
+            else:
+                logger.error("Database connection failed")
+                st.error("Verification failed: Database connection error")
+        except Exception as e:
+            logger.error(f"Verification failed for {email}: {str(e)}")
+            st.error(f"Verification failed: {str(e)}")
+    st.stop()
 
 st.set_page_config(
     page_title="Credit Tools Portal",
@@ -28,12 +73,6 @@ if "user_phone" not in st.session_state:
     st.session_state["user_phone"] = ""
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False  # Initialize logged_in as False
-
-cookie_manager = stx.CookieManager()
-cookies = cookie_manager.get_all()
-if "user_email" in cookies:
-    st.session_state["logged_in"] = True
-    st.session_state["user_email"] = cookies["user_email"]
 
 from dashboard import show_dashboard
 from dispute_letter import show_dispute_form
@@ -64,7 +103,6 @@ else:
         if st.button("🔓 Logout"):
             st.session_state["logged_in"] = False
             st.session_state["user_name"] = ""
-            cookie_manager.delete("user_email")
             st.rerun()
 
     if st.session_state["nav"] == "Dashboard":
