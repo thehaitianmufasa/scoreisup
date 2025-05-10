@@ -2,3 +2,4 @@ streamlit
 fpdf
 bcrypt
 mysql-connector-python
+streamlit-extras
