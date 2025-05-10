@@ -127,62 +127,6 @@ def get_app_domain():
     except Exception:
         return 'scoreisup.com'
 
-def send_verification_email(email, token):
-    """Send verification email to user"""
-    try:
-        # Get the current domain
-        current_domain = get_app_domain()
-        verify_link = f"https://{current_domain}/verify?email={email}&token={token}"
-        
-        # Log the attempt
-        print(f"Attempting to send verification email to {email}")
-        print(f"Using domain: {current_domain}")
-        print(f"Verification link: {verify_link}")
-        
-        body = f"""
-Hi {email.split('@')[0].title()},
-
-🎉 Welcome to ScoreIsUp!
-
-Please verify your email by clicking the link below:
-{verify_link}
-
-If you didn't sign up, feel free to ignore this email.
-
-— The ScoreIsUp Team
-"""
-        msg = MIMEText(body)
-        msg["Subject"] = "Welcome to ScoreIsUp! Please verify your email"
-        msg["From"] = "ScoreIsUp <no-reply@scoreisup.com>"
-        msg["To"] = email
-        
-        # Test SMTP connection first
-        with smtplib.SMTP(MAILGUN_SMTP_HOST, MAILGUN_SMTP_PORT) as server:
-            server.starttls()
-            server.login(MAILGUN_SMTP_USER, MAILGUN_SMTP_PASS)
-            server.sendmail(msg["From"], [email], msg.as_string())
-            
-        print(f"✅ Verification email sent successfully to {email}")
-        return True
-        
-    except smtplib.SMTPAuthenticationError as e:
-        error_msg = f"SMTP Authentication failed: {str(e)}"
-        print(error_msg)
-        st.error("Email service configuration error. Please contact support.")
-        return False
-        
-    except smtplib.SMTPException as e:
-        error_msg = f"SMTP error occurred: {str(e)}"
-        print(error_msg)
-        st.error("Failed to send verification email. Please try again.")
-        return False
-        
-    except Exception as e:
-        error_msg = f"Unexpected error sending verification email: {str(e)}"
-        print(error_msg)
-        st.error("An unexpected error occurred. Please try again or contact support.")
-        return False
-
 def send_welcome_email(email):
     """Send welcome email to user"""
     try:
@@ -241,7 +185,7 @@ def signup():
             record_attempt(ip, 'signup')
             return
         try:
-            if insert_user(email, password, verified=True):
+            if insert_user(email, password):
                 send_welcome_email(email)
                 # Set session state
                 st.session_state.logged_in = True
@@ -283,7 +227,7 @@ def test_email_sending():
             print("SMTP connection and login successful!")
             
         # Try sending a test email
-        send_verification_email(test_email, test_token)
+        send_welcome_email(test_email)
         return True
     except Exception as e:
         print(f"Email test failed: {str(e)}")
