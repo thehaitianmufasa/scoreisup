@@ -33,7 +33,7 @@ def login():
                 st.session_state.logged_in = True
                 st.session_state.user_email = user["email"]
                 st.success(f"Welcome back, {user['email']}!")
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Invalid email or password.")
         except Exception as e:
