@@ -62,10 +62,10 @@ def insert_user(email, password):
             password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
             insert_query = """
-                INSERT INTO users (email, password_hash, created_at)
+                INSERT INTO users (email, password, created_at)
                 VALUES (%s, %s, NOW())
             """
-            cursor.execute(insert_query, (email, password_hash))
+            cursor.execute(insert_query, (email, password_hash.decode()))
             connection.commit()
             return True
 
@@ -83,11 +83,11 @@ def get_connection():
     """Create and return a database connection"""
     try:
         connection = mysql.connector.connect(
-            host=st.secrets["MYSQL"]["MYSQL_HOST"],
-            port=int(st.secrets["MYSQL"]["MYSQL_PORT"]),
-            user=st.secrets["MYSQL"]["MYSQL_USER"],
-            password=st.secrets["MYSQL"]["MYSQL_PASSWORD"],
-            database=st.secrets["MYSQL"]["MYSQL_DATABASE"]
+            host=st.secrets["MYSQL_HOST"],
+            port=int(st.secrets["MYSQL_PORT"]),
+            user=st.secrets["MYSQL_USER"],
+            password=st.secrets["MYSQL_PASSWORD"],
+            database=st.secrets["MYSQL_DATABASE"]
         )
         return connection
     except Exception as e:
@@ -127,9 +127,9 @@ def update_user_password(email, new_password):
 
         if connection.is_connected():
             cursor = connection.cursor()
-            new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            new_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode()
             cursor.execute(
-                "UPDATE users SET password_hash = %s WHERE email = %s",
+                "UPDATE users SET password = %s WHERE email = %s",
                 (new_hash, email)
             )
             connection.commit()
@@ -152,8 +152,9 @@ def create_user(email: str, password: str) -> bool:
         connection = get_connection()
         if connection and connection.is_connected():
             cursor = connection.cursor()
+            hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode()
             query = "INSERT INTO users (email, password) VALUES (%s, %s)"
-            cursor.execute(query, (email, password))
+            cursor.execute(query, (email, hashed))
             connection.commit()
             cursor.close()
             return True
@@ -205,3 +206,4 @@ def init_db():
     finally:
         if 'connection' in locals() and connection and connection.is_connected():
             connection.close()
+
