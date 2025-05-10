@@ -42,7 +42,7 @@ def insert_dispute_submission(name, email, address, dob, ssn_last4, bureau, disp
         return False
 
     finally:
-        if connection and connection.is_connected():
+        if 'connection' in locals() and connection and connection.is_connected():
             cursor.close()
             connection.close()
 
@@ -74,7 +74,7 @@ def insert_user(email, password):
         return False
 
     finally:
-        if connection and connection.is_connected():
+        if 'connection' in locals() and connection and connection.is_connected():
             cursor.close()
             connection.close()
 
@@ -111,7 +111,7 @@ def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
         st.error(f"Error fetching user: {str(e)}")
         return None
     finally:
-        if connection and connection.is_connected():
+        if 'connection' in locals() and connection and connection.is_connected():
             connection.close()
 
 
@@ -140,7 +140,7 @@ def update_user_password(email, new_password):
         return False
 
     finally:
-        if connection and connection.is_connected():
+        if 'connection' in locals() and connection and connection.is_connected():
             cursor.close()
             connection.close()
 
@@ -161,7 +161,7 @@ def create_user(email: str, password: str) -> bool:
         st.error(f"Error creating user: {str(e)}")
         return False
     finally:
-        if connection and connection.is_connected():
+        if 'connection' in locals() and connection and connection.is_connected():
             connection.close()
 
 
@@ -203,6 +203,6 @@ def init_db():
         st.error(f"Error initializing database: {str(e)}")
         return False
     finally:
-        if connection and connection.is_connected():
+        if 'connection' in locals() and connection and connection.is_connected():
             connection.close()
 
