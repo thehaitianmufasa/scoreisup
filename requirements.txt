@@ -2,4 +2,4 @@ streamlit
 fpdf
 bcrypt
 mysql-connector-python
-streamlit-extras
+streamlit-extras>=0.7.1
