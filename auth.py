@@ -5,7 +5,6 @@ import time
 import smtplib
 from email.mime.text import MIMEText
 import uuid
-from streamlit_extras import stx
 
 # In-memory rate limiting store
 RATE_LIMIT = {}
@@ -16,8 +15,6 @@ MAILGUN_SMTP_HOST = "smtp.mailgun.org"
 MAILGUN_SMTP_PORT = 587
 MAILGUN_SMTP_USER = "postmaster@mg.scoreisup.com"
 MAILGUN_SMTP_PASS = "Paysoz991@#"
-
-cookie_manager = stx.CookieManager()
 
 def get_client_ip():
     # Try to get IP from Streamlit headers (works if behind a proxy)
@@ -82,8 +79,6 @@ def login():
             if bcrypt.checkpw(password_bytes, stored_hash_bytes):
                 st.session_state.logged_in = True
                 st.session_state.user_email = user["email"]
-                # Set cookie for session persistence
-                cookie_manager.set("user_email", user["email"], max_age=86400)  # 1 day
                 st.success(f"Welcome back, {user['email']}!")
                 st.rerun()
             else:
