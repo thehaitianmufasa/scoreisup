@@ -70,11 +70,11 @@ def login():
     if is_rate_limited(ip, 'login'):
         st.error("Too many login attempts. Please try again later.")
         return
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
+    email = st.text_input("Email", key="login_email")
+    password = st.text_input("Password", type="password", key="login_password")
     # Simple CAPTCHA
-    captcha_answer = st.text_input("What is 3 + 4? (Anti-bot check)")
-    if st.button("Login"):
+    captcha_answer = st.text_input("What is 3 + 4? (Anti-bot check)", key="login_captcha")
+    if st.button("Login", key="login_button"):
         if not email or not password:
             st.error("Please enter both email and password.")
             return
@@ -165,7 +165,7 @@ def signup():
     confirm_password = st.text_input("Confirm Password", type="password", key="signup_confirm")
     # Simple CAPTCHA
     captcha_answer = st.text_input("What is 5 + 2? (Anti-bot check)", key="signup_captcha")
-    if st.button("Sign Up"):
+    if st.button("Sign Up", key="signup_button"):
         if not email or not password or not confirm_password:
             st.error("Please fill in all fields.")
             return
