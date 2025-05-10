@@ -11,7 +11,7 @@ def login():
     if st.button("Login"):
         user = get_user_by_email(email)
 
-        if user and bcrypt.checkpw(password.encode(), user["password"].encode()):
+        if user and "password" in user and bcrypt.checkpw(password.encode(), user["password"].encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = user["email"]
             st.success("Login successful!")
@@ -38,10 +38,6 @@ def signup():
 
         hashed_pw = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         insert_user(email, hashed_pw)
-
-        st.success("Account created successfully! You can now login.")
-        st.info("Login with your new credentials.")
-
 
         st.success("Account created successfully! You can now login.")
         st.info("Login with your new credentials.")
