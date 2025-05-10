@@ -6,51 +6,44 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- EMAIL VERIFICATION LOGIC ---
-params = st.query_params
-email = params.get("email", [None])[0]
-token = params.get("token", [None])[0]
-
-logger.info(f"Verification attempt - Email: {email}, Token: {token}")
-
-if email and token:
-    user = get_user_by_email(email)
-    if not user:
-        logger.error(f"User not found: {email}")
-        st.error("User not found.")
-    elif user.get("verified"):
-        logger.info(f"User already verified: {email}")
-        st.info("Your email is already verified.")
-    elif user.get("verification_token") != token:
-        logger.error(f"Invalid token for user {email}. Expected: {user.get('verification_token')}, Got: {token}")
-        st.error("Invalid or expired verification link.")
-    else:
-        try:
-            conn = get_connection()
-            if conn and conn.is_connected():
-                cursor = conn.cursor()
-                cursor.execute(
-                    "UPDATE users SET verified = %s, verification_token = NULL WHERE email = %s",
-                    (True, email)
-                )
-                conn.commit()
-                cursor.close()
-                conn.close()
-                logger.info(f"Successfully verified user: {email}")
-                st.success("Your email has been verified! You can now log in.")
-            else:
-                logger.error("Database connection failed")
-                st.error("Verification failed: Database connection error")
-        except Exception as e:
-            logger.error(f"Verification failed for {email}: {str(e)}")
-            st.error(f"Verification failed: {str(e)}")
-    st.stop()
-
 st.set_page_config(
     page_title="Credit Tools Portal",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Initialize session state
+if 'user_email' not in st.session_state:
+    st.session_state.user_email = None
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+
+# Main app content
+st.title("Credit Tools Portal")
+
+# Sidebar for login/signup
+with st.sidebar:
+    if not st.session_state.logged_in:
+        st.markdown("### Account")
+        tab1, tab2 = st.tabs(["Login", "Sign Up"])
+        with tab1:
+            from auth import login
+            login()
+        with tab2:
+            from auth import signup
+            signup()
+    else:
+        st.markdown(f"### Welcome, {st.session_state.user_email}")
+        if st.button("Logout"):
+            from auth import logout
+            logout()
+
+# Main content area
+if st.session_state.logged_in:
+    st.markdown("### Your Credit Tools")
+    # Add your credit tools content here
+else:
+    st.info("Please log in or sign up to access the credit tools.")
 
 # Minimal CSS for a dark sidebar only
 st.markdown("""
@@ -71,14 +64,11 @@ if "user_address" not in st.session_state:
     st.session_state["user_address"] = ""
 if "user_phone" not in st.session_state:
     st.session_state["user_phone"] = ""
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False  # Initialize logged_in as False
 
 from dashboard import show_dashboard
 from dispute_letter import show_dispute_form
 from settings import settings_page
 from src.utils.config import APP_CONFIG
-from auth import login, signup
 
 # --- AUTHENTICATION ---
 if not st.session_state["logged_in"]:  # Use dictionary-style access
