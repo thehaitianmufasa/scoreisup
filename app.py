@@ -6,6 +6,39 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Initialize session state
+if 'user_email' not in st.session_state:
+    st.session_state.user_email = None
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+
+# Main app content
+st.title("Credit Tools Portal")
+
+# Sidebar for login/signup
+with st.sidebar:
+    if not st.session_state.logged_in:
+        st.markdown("### Account")
+        tab1, tab2 = st.tabs(["Login", "Sign Up"])
+        with tab1:
+            from auth import login
+            login()
+        with tab2:
+            from auth import signup
+            signup()
+    else:
+        st.markdown(f"### Welcome, {st.session_state.user_email}")
+        if st.button("Logout"):
+            from auth import logout
+            logout()
+
+# Main content area
+if st.session_state.logged_in:
+    st.markdown("### Your Credit Tools")
+    # Add your credit tools content here
+else:
+    st.info("Please log in or sign up to access the credit tools.")
+
 # Minimal CSS for a dark sidebar only
 st.markdown("""
     <style>
@@ -25,14 +58,11 @@ if "user_address" not in st.session_state:
     st.session_state["user_address"] = ""
 if "user_phone" not in st.session_state:
     st.session_state["user_phone"] = ""
-if "logged_in" not in st.session_state:
-    st.session_state["logged_in"] = False  # Initialize logged_in as False
 
 from dashboard import show_dashboard
 from dispute_letter import show_dispute_form
 from settings import settings_page
 from src.utils.config import APP_CONFIG
-from auth import login, signup
 
 # --- AUTHENTICATION ---
 if not st.session_state["logged_in"]:  # Use dictionary-style access
