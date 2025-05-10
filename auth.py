@@ -11,10 +11,13 @@ def login():
     if st.button("Login"):
         user = get_user_by_email(email)
 
-        if user and "password" in user and bcrypt.checkpw(password.encode(), user["password"].encode()):
+        # Support both password and password_hash
+        stored_hash = user.get("password") or user.get("password_hash")
+
+        if user and stored_hash and bcrypt.checkpw(password.encode(), stored_hash.encode()):
             st.session_state.logged_in = True
             st.session_state.user_email = user["email"]
-            st.success("Login successful!")
+            st.success(f"Welcome back, {user['email']}!")
             st.experimental_rerun()
         else:
             st.error("Invalid login credentials.")
@@ -40,5 +43,5 @@ def signup():
         insert_user(email, hashed_pw)
 
         st.success("Account created successfully! You can now login.")
-        st.info("Login with your new credentials.")
+        st.info("Login using the same form above.")
 
