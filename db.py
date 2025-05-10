@@ -205,4 +205,3 @@ def init_db():
     finally:
         if 'connection' in locals() and connection and connection.is_connected():
             connection.close()
-
