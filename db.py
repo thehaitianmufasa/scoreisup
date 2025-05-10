@@ -21,7 +21,8 @@ def insert_dispute_submission(
             port=int(st.secrets["MYSQL_PORT"]),
             user=st.secrets["MYSQL_USER"],
             password=st.secrets["MYSQL_PASSWORD"],
-            database=st.secrets["MYSQL_DATABASE"]
+            database=st.secrets["MYSQL_DATABASE"],
+            charset='utf8mb4'
         )
 
         if connection.is_connected():
@@ -48,7 +49,6 @@ def insert_dispute_submission(
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
-
 
 # --- Create New User ---
 def insert_user(email, password):
@@ -82,7 +82,6 @@ def insert_user(email, password):
             cursor.close()
             connection.close()
 
-
 # --- Retrieve User by Email ---
 def get_user_by_email(email):
     try:
@@ -109,3 +108,4 @@ def get_user_by_email(email):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
