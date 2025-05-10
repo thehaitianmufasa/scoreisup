@@ -32,3 +32,4 @@ def signup():
                 st.success("Account created. Please log in.")
             else:
                 st.error("Sign up failed.")
+
