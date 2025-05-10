@@ -60,8 +60,8 @@ def insert_user(email, password):
         if connection.is_connected():
             cursor = connection.cursor()
 
-            # Hash the password before storing
-            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            # ✅ Secure password hashing here
+            password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8').strip()
 
             insert_query = """
                 INSERT INTO users (email, password, created_at)
@@ -84,11 +84,23 @@ def insert_user(email, password):
 def get_connection():
     try:
         connection = mysql.connector.connect(
+            host=st.secrets["MYSQL"]["MYSQL_HOST"],
+            port=int(st.secrets["MYSQL"]["MYSQL_PORT"]),
+            user=st.secrets["MYSQL"]["MYSQL_USER"],
+def get_connection():
+    try:
+        connection = mysql.connector.connect(
             host=st.secrets["MYSQL_HOST"],
             port=int(st.secrets["MYSQL_PORT"]),
             user=st.secrets["MYSQL_USER"],
             password=st.secrets["MYSQL_PASSWORD"],
             database=st.secrets["MYSQL_DATABASE"]
+        )
+        return connection
+    except Exception as e:
+        st.error(f"Database connection error: {str(e)}")
+        return None            password=st.secrets["MYSQL"]["MYSQL_PASSWORD"],
+            database=st.secrets["MYSQL"]["MYSQL_DATABASE"]
         )
         return connection
     except Exception as e:

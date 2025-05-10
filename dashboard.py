@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import random
 from datetime import datetime, timedelta
 # from ui_helpers import render_footer  # No longer needed
@@ -22,6 +23,25 @@ def random_cases_and_categories():
         "Categories": categories,
         "Cases": [random.randint(10, 30) for _ in categories]
     }
+
+def random_date(start, end):
+    return start + timedelta(days=random.randint(0, (end - start).days))
+
+accounts = [
+    "Wells Fargo", "Capital One", "Discover", "Chase", "Amex", "Citi", "Bank of America"
+]
+statuses = ["Resolved", "Pending", "In Progress"]
+
+today = datetime.today()
+start_date = today - timedelta(days=30)
+data = []
+for _ in range(3):
+    date = random_date(start_date, today).strftime("%Y-%m-%d")
+    account = random.choice(accounts)
+    status = random.choice(statuses)
+    data.append({"Date": date, "Account": account, "Status": status})
+
+df = pd.DataFrame(data)
 
 def show_dashboard():
     # Color Palette
@@ -67,14 +87,9 @@ def show_dashboard():
     </div>
     """.format(total_disputes, resolved, pending, success_rate), unsafe_allow_html=True)
 
-    # Recent Activity / Table
-    st.markdown("### 📝 Recent Submissions")
-    recent = random_recent_submissions(3)
-    st.table({
-        "Date": [r["Date"] for r in recent],
-        "Account": [r["Account"] for r in recent],
-        "Status": [r["Status"] for r in recent]
-    })
+    # Our Community Table (replaces Recent Submissions)
+    st.markdown("## 🧑‍🤝‍🧑 Our Community")
+    st.table(df)
 
     # Footer Tip Box
     st.markdown(f"""
