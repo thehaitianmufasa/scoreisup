@@ -41,4 +41,3 @@ def signup():
 
         st.success("Account created successfully! You can now login.")
         st.info("Login with your new credentials.")
-
