@@ -1,69 +1,100 @@
+# Force rebuild to deploy waitlist live
 import streamlit as st
-from dashboard import show_dashboard
-from dispute_letter import show_dispute_form
-from auth import login, signup
-from src.utils.config import APP_CONFIG
+import mysql.connector
+from mysql.connector import IntegrityError
+import requests
 
-st.set_page_config(
-    page_title="Credit Tools Portal",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="ScoreIsUp Waitlist", layout="centered")
 
-# --- SESSION STATE INITIALIZATION ---
-if "nav" not in st.session_state:
-    st.session_state["nav"] = "Dashboard"
-if "user_name" not in st.session_state:
-    st.session_state.user_name = "Test User"
-if "user_address" not in st.session_state:
-    st.session_state.user_address = ""
-if "user_phone" not in st.session_state:
-    st.session_state.user_phone = ""
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-# -------------------------------------
+# ----------- Mailgun Config -----------
+MAILGUN_DOMAIN = "mg.scoreisup.com"
+MAILGUN_API_KEY = "MAILGUN_API_KEY"
+FROM_EMAIL = "ScoreIsUp <postmaster@mg.scoreisup.com>"
 
-# --- AUTHENTICATION ---
-if not st.session_state.logged_in:
-    auth_mode = st.radio("Select Option", ["Login", "Sign Up"])
-    if auth_mode == "Login":
-        login()
-    else:
-        signup()
-else:
-    # Sidebar Navigation
-    with st.sidebar:
-        st.title("🔧 Tools Portal")
-        st.success(f"Logged in as: {st.session_state.user_name}")
-        nav = st.radio(
-            "Go to",
-            ["Dashboard", "Dispute Letter", "Settings"],
-            index=["Dashboard", "Dispute Letter", "Settings"].index(st.session_state["nav"]),
-            key="nav_radio"
-        )
-        if nav != st.session_state["nav"]:
-            st.session_state["nav"] = nav
-            st.rerun()
-        if st.button("🔓 Logout"):
-            st.session_state.logged_in = False
-            st.session_state.user_name = ""
-            st.rerun()
+# ----------- Send Confirmation Email -----------
+def send_confirmation_email(to_email):
+    return requests.post(
+        f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages",
+        auth=("api", MAILGUN_API_KEY),
+        data={
+            "from": FROM_EMAIL,
+            "to": [to_email],
+            "subject": "You're on the ScoreIsUp waitlist 🧠",
+            "text": (
+                "Thank you for joining!\n\n"
+                "We’ll notify you when we are live — and thank you so much for the support.\n\n"
+                "- Team ScoreIsUp"
+            )
+        }
+    )
 
-    # Main content
-    if st.session_state["nav"] == "Dashboard":
-        show_dashboard()
-    elif st.session_state["nav"] == "Dispute Letter":
-        show_dispute_form()
-    elif st.session_state["nav"] == "Settings":
-        st.markdown("## ⚙️ Settings")
-        st.markdown("### User Profile")
-        with st.form("profile_form"):
-            name = st.text_input("Name", value=st.session_state.user_name)
-            submitted = st.form_submit_button("Update Profile")
-            if submitted:
-                st.session_state.user_name = name
-                st.success("Profile updated!")
+# ----------- MySQL Connection -----------
+def connect_db():
+    return mysql.connector.connect(
+        host="shortline.proxy.rlwy.net",
+        port=59017,
+        user="root",
+        password="kAfGOGEepZaJkWdmTJpTSniVKBxUFNJy",
+        database="railway"
+    )
 
-    st.markdown("---")
-    st.markdown(f"<p style='text-align: center; margin: 0;'>© {APP_CONFIG['COMPANY_NAME']} 2025</p>", unsafe_allow_html=True)
+# ----------- Insert Email -----------
+def insert_email(email):
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO waitlist_users (email) VALUES (%s)", (email,))
+        conn.commit()
+        return True
+    except IntegrityError:
+        return False
+    finally:
+        conn.close()
 
+# ----------- Main App -----------
+def main():
+    st.markdown(
+        """
+        <style>
+        body {
+          background-color: #0f0f0f;
+        }
+        .centered {
+          text-align: center;
+          margin-top: 100px;
+          color: white;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .number {
+          font-size: 3em;
+          font-weight: bold;
+          background: linear-gradient(to right, #5ea1ff, #6affc5);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.markdown("<div class='centered'>", unsafe_allow_html=True)
+    st.title("You're on the ScoreIsUp Waitlist")
+    st.markdown("**Enter your email to secure your spot.**")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    email = st.text_input("Email Address")
+
+    if st.button("Join Waitlist"):
+        if email:
+            added = insert_email(email)
+            if added:
+                send_confirmation_email(email)
+                st.success("🎉 You're officially on the waitlist. A confirmation email has been sent!")
+            else:
+                st.warning("You’ve already joined the waitlist.")
+        else:
+            st.error("Please enter a valid email.")
+
+# ----------- Run -----------
+if __name__ == "__main__":
+    main()
