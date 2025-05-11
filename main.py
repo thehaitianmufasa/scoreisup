@@ -3,30 +3,58 @@ import streamlit as st
 import mysql.connector
 from mysql.connector import IntegrityError
 import requests
+import smtplib
+from email.mime.text import MIMEText
+import logging
 
 st.set_page_config(page_title="ScoreIsUp Waitlist", layout="centered")
 
-# ----------- Mailgun Config -----------
-MAILGUN_DOMAIN = "mg.scoreisup.com"
-MAILGUN_API_KEY = "MAILGUN_API_KEY"
+# ----------- Email Config (SMTP) -----------
+SMTP_HOST = "smtp.mailgun.org"
+SMTP_PORT = 587
+SMTP_USER = "postmaster@mg.scoreisup.com"
+SMTP_PASS = "Paysoz991@#"
 FROM_EMAIL = "ScoreIsUp <postmaster@mg.scoreisup.com>"
 
-# ----------- Send Confirmation Email -----------
+# Add a file handler for email debug logs (waitlist)
+waitlist_email_logger = logging.getLogger("waitlist_email_debug")
+waitlist_file_handler = logging.FileHandler("waitlist_email_debug.log")
+waitlist_file_handler.setLevel(logging.INFO)
+waitlist_formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+waitlist_file_handler.setFormatter(waitlist_formatter)
+if not waitlist_email_logger.hasHandlers():
+    waitlist_email_logger.addHandler(waitlist_file_handler)
+waitlist_email_logger.propagate = False
+
+# ----------- Send Confirmation Email (SMTP) -----------
 def send_confirmation_email(to_email):
-    return requests.post(
-        f"https://api.mailgun.net/v3/{MAILGUN_DOMAIN}/messages",
-        auth=("api", MAILGUN_API_KEY),
-        data={
-            "from": FROM_EMAIL,
-            "to": [to_email],
-            "subject": "You're on the ScoreIsUp waitlist 🧠",
-            "text": (
-                "Thank you for joining!\n\n"
-                "We’ll notify you when we are live — and thank you so much for the support.\n\n"
-                "- Team ScoreIsUp"
-            )
-        }
+    waitlist_email_logger.info(f"Starting waitlist confirmation email for {to_email}")
+    waitlist_email_logger.info(f"SMTP_USER: {SMTP_USER}")
+    
+    msg = MIMEText(
+        """Thank you for joining the ScoreIsUp waitlist!\n\nWe'll notify you when we are live — and thank you so much for the support.\n\n- Team ScoreIsUp"""
     )
+    msg["Subject"] = "You're on the ScoreIsUp waitlist 🧠"
+    msg["From"] = FROM_EMAIL
+    msg["To"] = to_email
+    try:
+        waitlist_email_logger.info(f"Connecting to {SMTP_HOST}:{SMTP_PORT}")
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            waitlist_email_logger.info("Connection established")
+            waitlist_email_logger.info("Starting TLS...")
+            server.starttls()
+            waitlist_email_logger.info("TLS started")
+            waitlist_email_logger.info(f"Logging in as {SMTP_USER}")
+            server.login(SMTP_USER, SMTP_PASS)
+            waitlist_email_logger.info("Login successful")
+            waitlist_email_logger.info(f"Sending email to {to_email}")
+            server.sendmail(FROM_EMAIL, [to_email], msg.as_string())
+            waitlist_email_logger.info("Email sent successfully!")
+            return True
+    except Exception as e:
+        waitlist_email_logger.error(f"Error: {str(e)}")
+        waitlist_email_logger.error(f"Error type: {type(e).__name__}")
+        return False
 
 # ----------- MySQL Connection -----------
 def connect_db():
@@ -91,7 +119,7 @@ def main():
                 send_confirmation_email(email)
                 st.success("🎉 You're officially on the waitlist. A confirmation email has been sent!")
             else:
-                st.warning("You’ve already joined the waitlist.")
+                st.warning("You've already joined the waitlist.")
         else:
             st.error("Please enter a valid email.")
 

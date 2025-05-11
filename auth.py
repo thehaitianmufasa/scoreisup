@@ -86,6 +86,32 @@ def login():
             st.error("Please try again or contact support if the problem persists.")
             record_attempt(ip, 'login')
 
+def send_verification_email(email, token):
+    verify_link = f"https://scoreisup.com/verify?email={email}&token={token}"
+    body = f"""
+Hi {email.split('@')[0].title()},
+
+🎉 Welcome to ScoreIsUp!
+
+Please verify your email by clicking the link below:
+{verify_link}
+
+If you didn't sign up, feel free to ignore this email.
+
+— The ScoreIsUp Team
+"""
+    msg = MIMEText(body)
+    msg["Subject"] = "Welcome to ScoreIsUp! Please verify your email"
+    msg["From"] = "ScoreIsUp <no-reply@scoreisup.com>"
+    msg["To"] = email
+    try:
+        with smtplib.SMTP(MAILGUN_SMTP_HOST, MAILGUN_SMTP_PORT) as server:
+            server.starttls()
+            server.login(MAILGUN_SMTP_USER, MAILGUN_SMTP_PASS)
+            server.sendmail(msg["From"], [email], msg.as_string())
+    except Exception as e:
+        st.error(f"Failed to send verification email: {e}")
+
 def signup():
     st.markdown("## ✍️ Sign Up")
     ip = get_client_ip()
@@ -117,8 +143,10 @@ def signup():
             record_attempt(ip, 'signup')
             return
         try:
-            if insert_user(email, password):
-                st.success("Account created! Welcome to ScoreIsUp!")
+            verification_token = str(uuid.uuid4())
+            if insert_user(email, password, verification_token):
+                send_verification_email(email, verification_token)
+                st.success("Account created! Please check your email to verify your account before logging in.")
             else:
                 st.error("Failed to create account. Please try again.")
                 record_attempt(ip, 'signup')
