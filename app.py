@@ -63,14 +63,14 @@ if st.session_state.logged_in:
     elif st.session_state["nav"] == "Settings":
         settings_page()
     st.markdown("---")
+    st.markdown(f"<p style='text-align: center; margin: 0;'>© {APP_CONFIG['COMPANY_NAME']} 2025</p>", unsafe_allow_html=True)
     st.markdown("""
-        <div style='text-align: center; margin-bottom: 10px;'>
+        <div style='text-align: center; margin-top: 10px;'>
             <a href='mailto:support@scoreisup.com' style='color: #fdbb6d; font-weight: bold; text-decoration: none; font-size: 1.1rem;'>
                 📧 Contact Us
             </a>
         </div>
     """, unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align: center; margin: 0;'>© {APP_CONFIG['COMPANY_NAME']} 2025</p>", unsafe_allow_html=True)
 else:
     st.info("Please log in or sign up to access the credit tools.")
 
